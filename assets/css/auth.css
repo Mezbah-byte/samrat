@@ -1,0 +1,409 @@
+/* Auth pages - dark room with a pull-cord lamp; the form is frosted glass.
+   Loaded only by layouts/auth.php, after app.css, so it may override freely. */
+
+.auth-lamp {
+    --bg-off:      #121417;
+    --bg-on:       #1c1f24;
+    --lamp-shade:  #f5f0e6;
+    --lamp-base:   #d1ccc2;
+    --glow:        rgba(255, 214, 110, .3);
+    --accent:      #d4a373;
+    --on:          0;
+    --ease:        .5s cubic-bezier(.4, 0, .2, 1);
+
+    min-height: 100vh;
+    background: var(--bg-off);
+    color: #fff;
+    transition: background var(--ease);
+}
+
+/* Warm pool of light, faded in when the lamp is switched on. */
+.auth-lamp::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 50% 40%, var(--glow), transparent 70%);
+    opacity: var(--on);
+    transition: opacity var(--ease);
+    pointer-events: none;
+}
+
+.auth-stage {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1rem;
+}
+
+.auth-shell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6vmin;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 1000px;
+}
+
+.auth-shell.wide {
+    max-width: 1180px;
+}
+
+/* --- lamp ------------------------------------------------------------ */
+
+.lamp-wrapper {
+    position: relative;
+    flex: 0 0 auto;
+    width: 260px;
+    height: 380px;
+    display: flex;
+    justify-content: center;
+}
+
+.lamp-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.lamp-shade {
+    fill: var(--lamp-shade);
+    transition: fill var(--ease), filter var(--ease);
+}
+
+.auth-lamp[data-on="true"] .lamp-shade {
+    fill: #fff;
+    filter: drop-shadow(0 0 30px rgba(255, 255, 200, .4));
+}
+
+.lamp-base {
+    fill: var(--lamp-base);
+}
+
+.inner-glow {
+    fill: #ffdb8a;
+    opacity: 0;
+    filter: blur(15px);
+    transition: opacity var(--ease);
+}
+
+.auth-lamp[data-on="true"] .inner-glow {
+    opacity: .6;
+}
+
+.cord-line {
+    stroke: #555;
+    stroke-width: 2;
+}
+
+.cord-bead {
+    fill: var(--accent);
+}
+
+.cord-hit {
+    cursor: pointer;
+}
+
+.cord-hit:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.lamp-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    color: #6d7379;
+    font-size: .78rem;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    transition: opacity var(--ease);
+}
+
+.auth-lamp[data-on="true"] .lamp-hint {
+    opacity: 0;
+}
+
+/* --- glass panel ----------------------------------------------------- */
+
+.auth-panel {
+    flex: 1 1 340px;
+    max-width: 400px;
+    padding: 2.5rem;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, .05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, .1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, .3);
+    transition: opacity .7s cubic-bezier(.175, .885, .32, 1.275),
+                transform .7s cubic-bezier(.175, .885, .32, 1.275);
+}
+
+.auth-shell.wide .auth-panel {
+    flex-basis: 620px;
+    max-width: 700px;
+}
+
+/* The lamp reveal is a JS enhancement: `is-hidden` is only ever set by
+   auth-lamp.js, so with JS off the form renders normally. */
+.auth-panel.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(30px);
+}
+
+.auth-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    text-decoration: none;
+    color: #fff;
+    margin-bottom: 1.25rem;
+}
+
+.auth-brand span {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: .02em;
+}
+
+.auth-title {
+    color: #fff;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin: 0 0 .3rem;
+}
+
+.auth-sub {
+    color: #999;
+    text-align: center;
+    font-size: .82rem;
+    margin: 0 0 1.5rem;
+}
+
+.auth-foot {
+    color: #999;
+    text-align: center;
+    font-size: .84rem;
+    margin: 1rem 0 0;
+}
+
+.auth-foot a,
+.auth-sub a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.auth-foot a:hover,
+.auth-sub a:hover {
+    text-decoration: underline;
+}
+
+.auth-copyright {
+    color: #5b6167;
+    text-align: center;
+    font-size: .76rem;
+    margin: 1.75rem 0 0;
+}
+
+/* --- fields ---------------------------------------------------------- */
+
+.auth-label {
+    display: block;
+    color: #999;
+    font-size: .85rem;
+    margin: 0 0 .5rem 5px;
+}
+
+.auth-field {
+    position: relative;
+}
+
+.auth-field > i {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: .95rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.auth-panel .form-control,
+.auth-panel .form-select {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1px solid transparent;
+    border-radius: 15px;
+    color: #fff;
+    background-color: rgba(255, 255, 255, .07);
+    font-size: 1rem;
+    box-shadow: none;
+    transition: .3s;
+}
+
+.auth-field .form-control,
+.auth-field .form-select {
+    padding-left: 46px;
+}
+
+.auth-panel .form-control:focus,
+.auth-panel .form-select:focus {
+    border-color: var(--accent);
+    background-color: rgba(255, 255, 255, .12);
+    color: #fff;
+    box-shadow: none;
+}
+
+.auth-panel .form-control::placeholder {
+    color: #6d7379;
+}
+
+/* Chrome paints autofilled fields opaque white, which breaks the glass. */
+.auth-panel .form-control:-webkit-autofill,
+.auth-panel .form-control:-webkit-autofill:hover,
+.auth-panel .form-control:-webkit-autofill:focus,
+.auth-panel .form-select:-webkit-autofill {
+    -webkit-text-fill-color: #fff;
+    -webkit-box-shadow: 0 0 0 1000px #23262b inset;
+    caret-color: #fff;
+    transition: background-color 9999s ease-out;
+}
+
+.auth-panel .form-select {
+    /* Bootstrap's caret is a dark SVG - swap it for one that reads on glass. */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23d4a373' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 14px 11px;
+    padding-right: 2.6rem;
+}
+
+.auth-panel .form-select option {
+    background: var(--bg-on);
+    color: #fff;
+}
+
+.auth-panel .form-control-sm {
+    padding: 8px 12px;
+    font-size: .85rem;
+}
+
+.auth-panel .form-text {
+    color: #7b8188;
+    font-size: .76rem;
+    margin-top: .35rem;
+}
+
+.auth-panel .form-check-label {
+    color: #999;
+}
+
+.auth-panel .form-check-input {
+    border-color: rgba(255, 255, 255, .25);
+    background-color: rgba(255, 255, 255, .07);
+}
+
+.auth-panel .form-check-input:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.auth-panel .form-check-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(212, 163, 115, .25);
+}
+
+/* --- button ---------------------------------------------------------- */
+
+.btn-auth {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #121417;
+    background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fcf6ba, #aa771c);
+    transition: .3s;
+}
+
+.btn-auth:hover,
+.btn-auth:focus {
+    color: #121417;
+    transform: scale(1.02);
+    background: var(--lamp-shade);
+}
+
+/* --- messages -------------------------------------------------------- */
+
+.auth-panel .alert {
+    border: 1px solid transparent;
+    border-radius: 15px;
+    font-size: .85rem;
+}
+
+.auth-panel .alert-danger {
+    background: rgba(220, 76, 70, .14);
+    border-color: rgba(220, 76, 70, .35);
+    color: #f3b0ac;
+}
+
+.auth-panel .alert-success {
+    background: rgba(120, 190, 130, .14);
+    border-color: rgba(120, 190, 130, .35);
+    color: #b6e3bd;
+}
+
+.auth-panel .copy-field .btn {
+    border-radius: 12px;
+    border-color: rgba(255, 255, 255, .25);
+    color: #fff;
+}
+
+.auth-panel .copy-field .btn:hover {
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+}
+
+/* --- responsive ------------------------------------------------------ */
+
+@media (max-width: 900px) {
+    .auth-shell {
+        gap: 1rem;
+    }
+
+    .lamp-wrapper {
+        width: 190px;
+        height: 260px;
+    }
+
+    .auth-panel,
+    .auth-shell.wide .auth-panel {
+        flex: 1 1 100%;
+        max-width: 420px;
+        padding: 2rem 1.5rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-lamp,
+    .auth-lamp::before,
+    .auth-panel,
+    .lamp-shade,
+    .inner-glow {
+        transition-duration: .01ms;
+    }
+}

@@ -1,0 +1,1090 @@
+/* Landing page only - loaded by layouts/public.php for the home screen.
+ *
+ * Shape borrowed from the established get-paid-to sites: a hero that already
+ * asks for an email, cards for the ways to earn, a numbered explainer, a payout
+ * section, FAQ, then the same call to action again. Colour does the lifting -
+ * indigo for the brand, green for money, amber for rewards - because a flat
+ * near-black page reads as unfinished.
+ *
+ * Motion budget stays small: entrance fades, the ad that is playing, hover
+ * states. Nothing loops in the background.
+ *
+ * Depends on the tokens in ui.css. */
+
+/* ============================================================
+   1. Local tokens
+   ============================================================ */
+
+:root {
+    --lp-gold:  #f59e0b;
+    --lp-green: #10b981;
+    --lp-pad:   clamp(4rem, 7vw, 6.5rem);
+    --lp-gap:   clamp(1rem, 2vw, 1.5rem);
+    --lp-r:     18px;
+}
+
+[data-theme="dark"] {
+    --lp-hero-1: #151a37;
+    --lp-hero-2: #0a0d18;
+    --lp-tint:   rgba(87, 91, 235, .16);
+    --lp-tint-2: rgba(245, 158, 11, .12);
+    --lp-card:   var(--panel);
+}
+
+[data-theme="light"] {
+    --lp-hero-1: #eef1ff;
+    --lp-hero-2: #f7f8fc;
+    --lp-tint:   rgba(87, 91, 235, .12);
+    --lp-tint-2: rgba(245, 158, 11, .1);
+    --lp-card:   #fff;
+}
+
+/* ============================================================
+   2. Shared type
+   ============================================================ */
+
+/* Rajdhani is the panel's display face; the landing page wants the tighter
+   Inter instead. Scoped through body.ui so it beats the heading rule in ui.css. */
+body.ui .lp-hero h1,
+body.ui .lp-head h2,
+body.ui .lp-split-copy h2,
+body.ui .lp-way h3,
+body.ui .lp-flow h3,
+body.ui .lp-why-item h3,
+body.ui .lp-cta h2,
+body.ui .lp-app-name,
+body.ui .lp-q summary {
+    font-family: var(--font-body);
+    font-weight: 700;
+    letter-spacing: -.028em;
+}
+
+.lp-section {
+    padding: var(--lp-pad) 0;
+}
+
+.lp-section-alt {
+    background: var(--panel-2);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+
+.lp-head {
+    max-width: 42rem;
+    margin: 0 0 clamp(2rem, 4vw, 3rem);
+}
+
+.lp-head.center {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.lp-head h2 {
+    font-size: clamp(1.7rem, 3.1vw, 2.3rem);
+    line-height: 1.14;
+    margin: .6rem 0 .55rem;
+}
+
+.lp-head p {
+    color: var(--txt-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 36rem;
+    margin: 0;
+}
+
+.lp-head.center p {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.lp-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .32rem .75rem;
+    border: 1px solid var(--line);
+    border-radius: var(--r-pill);
+    background: var(--field);
+    color: var(--txt-muted);
+    font-size: .74rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.lp-eyebrow.plain {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    letter-spacing: .12em;
+}
+
+/* ============================================================
+   3. Buttons, links, email field
+   ============================================================ */
+
+.lp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-height: 48px;
+    padding: 0 1.3rem;
+    border: 1px solid transparent;
+    border-radius: var(--r-sm);
+    font-size: .92rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background var(--fast), box-shadow var(--fast), color var(--fast), border-color var(--fast);
+}
+
+.lp-btn [data-lucide] {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--fast);
+}
+
+.lp-btn:hover [data-lucide] {
+    transform: translateX(3px);
+}
+
+.lp-btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(87, 91, 235, .28);
+}
+
+.lp-btn-primary:hover,
+.lp-btn-primary:focus-visible {
+    color: #fff;
+    box-shadow: 0 10px 26px rgba(87, 91, 235, .42);
+}
+
+/* Sits on the indigo call-to-action band, so it inverts. */
+.lp-btn-light {
+    background: #fff;
+    color: #1e2340;
+}
+
+.lp-btn-light:hover,
+.lp-btn-light:focus-visible {
+    background: #f1f2ff;
+    color: #1e2340;
+}
+
+.lp-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: auto;
+    font-weight: 600;
+    font-size: .88rem;
+}
+
+.lp-link [data-lucide] {
+    width: 15px;
+    height: 15px;
+    transition: transform var(--fast);
+}
+
+.lp-link:hover [data-lucide] {
+    transform: translateX(3px);
+}
+
+/* One field plus a button. The address is carried over to the real form. */
+.lp-form {
+    display: flex;
+    gap: .5rem;
+    max-width: 30rem;
+    margin: 1.75rem 0 .7rem;
+}
+
+.lp-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 48px;
+    padding: 0 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    background: var(--panel);
+    color: var(--txt);
+    font-size: .92rem;
+    transition: border-color var(--fast), box-shadow var(--fast);
+}
+
+.lp-form input::placeholder {
+    color: var(--txt-dim);
+}
+
+.lp-form input:focus {
+    outline: 0;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(87, 91, 235, .22);
+}
+
+.lp-form-note {
+    color: var(--txt-dim);
+    font-size: .82rem;
+    margin: 0;
+}
+
+/* ============================================================
+   4. Hero
+   ============================================================ */
+
+.lp-hero {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(3rem, 6vw, 5.5rem) 0 clamp(3.5rem, 6vw, 5.5rem);
+    border-bottom: 1px solid var(--line);
+}
+
+/* Static wash. An animated one was what made this page look cheap. */
+.lp-hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(70% 60% at 15% 0%, var(--lp-tint), transparent 70%),
+        radial-gradient(60% 55% at 85% 25%, var(--lp-tint-2), transparent 70%),
+        linear-gradient(180deg, var(--lp-hero-1), var(--lp-hero-2) 78%);
+    pointer-events: none;
+}
+
+.lp-hero > .container {
+    position: relative;
+    z-index: 1;
+}
+
+.lp-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(2.5rem, 5vw, 4rem);
+}
+
+.lp-hero h1 {
+    font-size: clamp(2.3rem, 4.6vw, 3.5rem);
+    line-height: 1.06;
+    margin: 1.1rem 0 1rem;
+}
+
+/* The payoff half of the headline carries the brand gradient. */
+.lp-hero h1 em {
+    font-style: normal;
+    background: linear-gradient(100deg, var(--accent-2), var(--lp-gold));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.lp-sub {
+    color: var(--txt-muted);
+    font-size: 1.05rem;
+    line-height: 1.62;
+    max-width: 31rem;
+    margin: 0;
+}
+
+.lp-proof {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.1rem;
+    list-style: none;
+    padding: 0;
+    margin: 1.6rem 0 0;
+    color: var(--txt-dim);
+    font-size: .84rem;
+}
+
+.lp-proof li {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.lp-proof [data-lucide] {
+    width: 15px;
+    height: 15px;
+}
+
+/* ============================================================
+   5. Product mock-ups
+   ============================================================ */
+
+.lp-hero-art,
+.lp-split-art {
+    position: relative;
+}
+
+/* Room under the mock so the floating card clears it instead of covering the
+   progress bar in its footer. */
+.lp-hero-art {
+    padding-bottom: 58px;
+}
+
+.lp-app {
+    border: 1px solid var(--line);
+    border-radius: var(--lp-r);
+    background: var(--lp-card);
+    box-shadow: 0 26px 60px rgba(0, 0, 0, .3);
+    overflow: hidden;
+}
+
+.lp-app-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .85rem 1.05rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+}
+
+.lp-app-name {
+    font-size: .88rem;
+}
+
+.lp-app-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .2rem .6rem;
+    border: 1px solid var(--line);
+    border-radius: var(--r-pill);
+    background: var(--field);
+    color: var(--txt-muted);
+    font-size: .74rem;
+    font-weight: 600;
+}
+
+.lp-app-body {
+    padding: .5rem;
+}
+
+.lp-task {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .7rem .75rem;
+    border-radius: var(--r-md);
+}
+
+.lp-task.active {
+    background: var(--field);
+}
+
+.lp-task-thumb {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    border-radius: var(--r-sm);
+    display: grid;
+    place-items: center;
+    background: var(--field);
+    color: var(--txt-dim);
+}
+
+.lp-task-thumb [data-lucide] {
+    width: 16px;
+    height: 16px;
+}
+
+.lp-task.done .lp-task-thumb {
+    background: rgba(16, 185, 129, .16);
+    color: var(--lp-green);
+}
+
+.lp-task.active .lp-task-thumb {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+}
+
+.lp-task-lines {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    min-width: 0;
+}
+
+/* Placeholder rules stand in for copy that only exists once you are signed in. */
+.l {
+    display: block;
+    height: 8px;
+    border-radius: var(--r-pill);
+    background: var(--line);
+}
+
+.l.s {
+    height: 6px;
+    opacity: .65;
+}
+
+.w-35 { width: 35%; }
+.w-40 { width: 40%; }
+.w-45 { width: 45%; }
+.w-50 { width: 50%; }
+.w-55 { width: 55%; }
+.w-60 { width: 60%; }
+.w-65 { width: 65%; }
+.w-70 { width: 70%; }
+.w-80 { width: 80%; }
+.w-90 { width: 90%; }
+
+.lp-task.done .l {
+    opacity: .55;
+}
+
+.lp-task-state {
+    flex: 0 0 auto;
+    font-size: .74rem;
+    font-weight: 600;
+    color: var(--txt-dim);
+}
+
+.lp-task-state.now {
+    color: var(--accent-2);
+}
+
+/* The one looping animation on the page: the ad that is playing. */
+.lp-task-bar {
+    display: block;
+    height: 6px;
+    border-radius: var(--r-pill);
+    background: var(--line);
+    overflow: hidden;
+}
+
+.lp-task-bar span {
+    display: block;
+    height: 100%;
+    width: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transform-origin: left;
+    animation: lp-fill 7s linear infinite;
+}
+
+@keyframes lp-fill {
+    0%        { transform: scaleX(.05); }
+    90%, 100% { transform: scaleX(1); }
+}
+
+.lp-app-foot {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .85rem 1.05rem;
+    border-top: 1px solid var(--line);
+    background: var(--panel-2);
+}
+
+.lp-app-foot-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--txt-muted);
+    white-space: nowrap;
+}
+
+.lp-app-foot-label [data-lucide] {
+    width: 15px;
+    height: 15px;
+    color: var(--lp-gold);
+}
+
+.lp-app-foot-bar {
+    flex: 1 1 auto;
+    height: 6px;
+    border-radius: var(--r-pill);
+    background: var(--line);
+    overflow: hidden;
+}
+
+.lp-app-foot-bar span {
+    display: block;
+    width: 62%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), var(--lp-gold));
+}
+
+.lp-float {
+    position: absolute;
+    right: -18px;
+    bottom: -6px;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    width: 60%;
+    max-width: 250px;
+    padding: .7rem .85rem;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--lp-card);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .32);
+}
+
+.lp-float-icon {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba(16, 185, 129, .16);
+    color: var(--lp-green);
+}
+
+.lp-float-icon [data-lucide] {
+    width: 15px;
+    height: 15px;
+}
+
+.lp-float-lines {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    min-width: 0;
+}
+
+/* ---- payout timeline ---- */
+
+.lp-timeline {
+    list-style: none;
+    padding: 1.15rem 1.05rem;
+    margin: 0;
+}
+
+.lp-timeline li {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: .85rem;
+    padding-bottom: 1.15rem;
+}
+
+.lp-timeline li:last-child {
+    padding-bottom: 0;
+}
+
+.lp-timeline li:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: 15px;
+    top: 32px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--line);
+}
+
+.lp-timeline li.done:not(:last-child)::before {
+    background: var(--lp-green);
+    opacity: .45;
+}
+
+.lp-tl-mark {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--field);
+    border: 1px solid var(--line);
+    color: var(--txt-dim);
+}
+
+.lp-tl-mark [data-lucide] {
+    width: 15px;
+    height: 15px;
+}
+
+.lp-timeline li.done .lp-tl-mark {
+    background: rgba(16, 185, 129, .16);
+    border-color: rgba(16, 185, 129, .35);
+    color: var(--lp-green);
+}
+
+.lp-timeline li.now .lp-tl-mark {
+    background: rgba(245, 158, 11, .16);
+    border-color: rgba(245, 158, 11, .4);
+    color: var(--lp-gold);
+}
+
+.lp-timeline li.now .lp-tl-mark [data-lucide] {
+    animation: lp-turn 1.8s linear infinite;
+}
+
+@keyframes lp-turn {
+    to { transform: rotate(360deg); }
+}
+
+.lp-tl-text {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    padding-top: .3rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: .86rem;
+}
+
+.lp-timeline li:not(.done):not(.now) .lp-tl-text strong {
+    color: var(--txt-dim);
+    font-weight: 600;
+}
+
+/* ============================================================
+   6. Trust strip
+   ============================================================ */
+
+.lp-strip {
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: .95rem 0;
+}
+
+.lp-strip ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .6rem 2.2rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: var(--txt-muted);
+    font-size: .85rem;
+    font-weight: 500;
+}
+
+.lp-strip li {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+}
+
+.lp-strip [data-lucide] {
+    width: 16px;
+    height: 16px;
+    color: var(--accent);
+}
+
+/* ============================================================
+   7. Ways to earn
+   ============================================================ */
+
+.lp-ways {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--lp-gap);
+}
+
+.lp-way {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.75rem 1.6rem;
+    border: 1px solid var(--line);
+    border-radius: var(--lp-r);
+    background: var(--lp-card);
+    overflow: hidden;
+    transition: transform var(--fast), border-color var(--fast), box-shadow var(--fast);
+}
+
+/* Tinted hairline at the top - the only thing separating the three tones. */
+.lp-way::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: var(--lp-tone);
+}
+
+.lp-way:hover {
+    transform: translateY(-3px);
+    border-color: var(--txt-dim);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, .18);
+}
+
+.lp-way.tone-accent { --lp-tone: linear-gradient(90deg, var(--accent), var(--accent-2)); --lp-tone-soft: rgba(87, 91, 235, .14); --lp-tone-ink: var(--accent); }
+.lp-way.tone-gold   { --lp-tone: linear-gradient(90deg, var(--lp-gold), #fbbf24);        --lp-tone-soft: rgba(245, 158, 11, .16); --lp-tone-ink: var(--lp-gold); }
+.lp-way.tone-green  { --lp-tone: linear-gradient(90deg, var(--lp-green), #34d399);       --lp-tone-soft: rgba(16, 185, 129, .16); --lp-tone-ink: var(--lp-green); }
+
+.lp-way-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--r-md);
+    display: grid;
+    place-items: center;
+    background: var(--lp-tone-soft);
+    color: var(--lp-tone-ink);
+    margin-bottom: 1.1rem;
+}
+
+.lp-way-icon [data-lucide] {
+    width: 21px;
+    height: 21px;
+}
+
+.lp-way h3 {
+    font-size: 1.08rem;
+    margin: 0 0 .45rem;
+}
+
+.lp-way p {
+    color: var(--txt-muted);
+    font-size: .9rem;
+    line-height: 1.6;
+    margin: 0 0 1.2rem;
+}
+
+/* ============================================================
+   8. How it works
+   ============================================================ */
+
+.lp-flow {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--lp-gap);
+}
+
+.lp-flow li {
+    position: relative;
+    padding-right: 1rem;
+}
+
+/* Dashed rail between the markers, on wide screens only. */
+.lp-flow li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 60px;
+    top: 25px;
+    right: -.5rem;
+    border-top: 2px dashed var(--line);
+}
+
+.lp-flow-mark {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-md);
+    background: var(--lp-card);
+    border: 1px solid var(--line);
+    color: var(--accent);
+    margin-bottom: 1.1rem;
+}
+
+.lp-flow-mark [data-lucide] {
+    width: 20px;
+    height: 20px;
+}
+
+.lp-flow-n {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.lp-flow h3 {
+    font-size: 1rem;
+    margin: 0 0 .4rem;
+}
+
+.lp-flow p {
+    color: var(--txt-muted);
+    font-size: .88rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 26ch;
+}
+
+/* ============================================================
+   9. Split payout section
+   ============================================================ */
+
+.lp-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(2.5rem, 5vw, 4rem);
+}
+
+.lp-split-copy h2 {
+    font-size: clamp(1.7rem, 3.1vw, 2.3rem);
+    line-height: 1.14;
+    margin: .6rem 0 .7rem;
+}
+
+.lp-split-copy > p {
+    color: var(--txt-muted);
+    font-size: 1rem;
+    line-height: 1.65;
+    max-width: 34rem;
+    margin: 0 0 1.3rem;
+}
+
+.lp-checks {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.6rem;
+    display: grid;
+    gap: .6rem;
+    font-size: .92rem;
+}
+
+.lp-checks li {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+
+.lp-checks [data-lucide] {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    color: var(--lp-green);
+}
+
+/* ============================================================
+   10. Why here
+   ============================================================ */
+
+.lp-why {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(1.2rem, 2.5vw, 2rem);
+}
+
+.lp-why-item {
+    display: flex;
+    gap: .9rem;
+}
+
+.lp-why-icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border-radius: var(--r-md);
+    display: grid;
+    place-items: center;
+    background: var(--field);
+    border: 1px solid var(--line);
+    color: var(--accent);
+}
+
+.lp-why-icon [data-lucide] {
+    width: 18px;
+    height: 18px;
+}
+
+.lp-why-item h3 {
+    font-size: .98rem;
+    margin: .15rem 0 .3rem;
+}
+
+.lp-why-item p {
+    color: var(--txt-muted);
+    font-size: .87rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ============================================================
+   11. FAQ
+   ============================================================ */
+
+.lp-faq-wrap {
+    max-width: 46rem;
+    margin: 0 auto;
+}
+
+.lp-faq {
+    border-top: 1px solid var(--line);
+}
+
+.lp-q {
+    border-bottom: 1px solid var(--line);
+}
+
+.lp-q summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.1rem 0;
+    cursor: pointer;
+    font-size: .97rem;
+    list-style: none;
+    transition: color var(--fast);
+}
+
+.lp-q summary::-webkit-details-marker {
+    display: none;
+}
+
+.lp-q summary:hover {
+    color: var(--accent);
+}
+
+.lp-q summary [data-lucide] {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+    color: var(--txt-dim);
+    transition: transform var(--fast), color var(--fast);
+}
+
+.lp-q[open] summary [data-lucide] {
+    transform: rotate(45deg);
+    color: var(--accent);
+}
+
+.lp-a {
+    padding: 0 3rem 1.2rem 0;
+    color: var(--txt-muted);
+    font-size: .92rem;
+    line-height: 1.65;
+}
+
+/* ============================================================
+   12. Closing call to action
+   ============================================================ */
+
+.lp-cta-section {
+    padding: 0 0 var(--lp-pad);
+}
+
+.lp-cta {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--lp-r);
+    padding: clamp(2.5rem, 5vw, 3.75rem) 1.5rem;
+    text-align: center;
+    color: #fff;
+}
+
+.lp-cta-bg {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(60% 80% at 15% 10%, rgba(255, 255, 255, .18), transparent 70%),
+        linear-gradient(120deg, #4b4fe0, #7c4ddb 55%, #b3499f);
+}
+
+.lp-cta-inner {
+    position: relative;
+    max-width: 34rem;
+    margin: 0 auto;
+}
+
+.lp-cta h2 {
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    line-height: 1.14;
+    margin: 0 0 .6rem;
+}
+
+.lp-cta p {
+    color: rgba(255, 255, 255, .82);
+    margin: 0;
+}
+
+.lp-cta .lp-form {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.lp-cta .lp-form input {
+    background: rgba(255, 255, 255, .14);
+    border-color: rgba(255, 255, 255, .3);
+    color: #fff;
+}
+
+.lp-cta .lp-form input::placeholder {
+    color: rgba(255, 255, 255, .65);
+}
+
+.lp-cta .lp-form input:focus {
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
+}
+
+.lp-cta .lp-form-note {
+    color: rgba(255, 255, 255, .75);
+}
+
+.lp-cta .lp-form-note a {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* ============================================================
+   13. Responsive
+   ============================================================ */
+
+@media (max-width: 1199.98px) {
+    .lp-flow li:not(:last-child)::after {
+        display: none;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .lp-hero-grid,
+    .lp-split {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .lp-hero-art {
+        max-width: 520px;
+    }
+
+    .lp-float {
+        right: 0;
+    }
+
+    .lp-ways,
+    .lp-why,
+    .lp-flow {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .lp-ways,
+    .lp-why,
+    .lp-flow {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .lp-form {
+        flex-direction: column;
+    }
+
+    .lp-float {
+        position: static;
+        width: 100%;
+        max-width: none;
+        margin-top: .75rem;
+        box-shadow: none;
+    }
+}

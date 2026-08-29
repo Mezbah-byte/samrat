@@ -1,0 +1,677 @@
+/* App shell for the user panel - sidebar, topbar, content column.
+   Depends on the tokens in ui.css. */
+
+/* ============================================================
+   1. Sidebar
+   ============================================================ */
+
+.side {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-w);
+    z-index: 1040;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    transition: width var(--slow), transform var(--slow);
+}
+
+.side-brand {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    padding: 1.1rem 1.15rem;
+    border-bottom: 1px solid var(--line);
+    min-height: 74px;
+}
+
+.side-brand .mark {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-md);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+
+.side-brand .mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.side-brand .words {
+    min-width: 0;
+    transition: opacity var(--fast);
+}
+
+.side-brand .name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.12rem;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.side-brand .tag {
+    color: var(--txt-muted);
+    font-size: .7rem;
+    white-space: nowrap;
+}
+
+.side-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: .75rem .7rem 1.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+}
+
+.side-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.side-scroll::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 3px;
+}
+
+.side-sec {
+    padding: 1rem .8rem .4rem;
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--txt-dim);
+    white-space: nowrap;
+    transition: opacity var(--fast);
+}
+
+.side-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .6rem .8rem;
+    border-radius: var(--r-sm);
+    color: var(--txt-muted);
+    font-size: .875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background var(--fast), color var(--fast);
+}
+
+.side-link:hover {
+    background: var(--field);
+    color: var(--txt);
+}
+
+.side-link.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(87, 91, 235, .3);
+}
+
+.side-link.active [data-lucide] {
+    color: #fff;
+}
+
+.side-link .label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity var(--fast);
+}
+
+.side-link .count {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: .12rem .42rem;
+    border-radius: var(--r-pill);
+    background: var(--warn);
+    color: #1a1205;
+    flex: 0 0 auto;
+}
+
+.side-link .count.alert {
+    background: var(--bad);
+    color: #fff;
+}
+
+.side-link.danger:hover {
+    color: var(--bad);
+}
+
+/* --- collapsed (icon-only) --------------------------------- */
+
+.app.mini .side {
+    width: var(--sidebar-mini-w);
+}
+
+.app.mini .side-brand {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.app.mini .side-brand .words,
+.app.mini .side-link .label,
+.app.mini .side-link .count {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+}
+
+.app.mini .side-sec {
+    opacity: 0;
+    height: 12px;
+    padding-top: .6rem;
+    padding-bottom: 0;
+}
+
+.app.mini .side-link {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Tooltip label, so the collapsed rail is still readable. */
+.app.mini .side-link::after {
+    content: attr(data-label);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-6px);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--txt);
+    padding: .32rem .6rem;
+    border-radius: var(--r-sm);
+    font-size: .78rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--fast), transform var(--fast);
+    z-index: 5;
+}
+
+.app.mini .side-link:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* ============================================================
+   2. Main column
+   ============================================================ */
+
+.main {
+    margin-left: var(--sidebar-w);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left var(--slow);
+}
+
+.app.mini .main {
+    margin-left: var(--sidebar-mini-w);
+}
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .8rem 1.4rem;
+    min-height: 74px;
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+}
+
+.topbar .page-name {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar .tools {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+}
+
+.balance-pill {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .4rem .8rem .4rem .55rem;
+    border-radius: var(--r-pill);
+    background: var(--field);
+    border: 1px solid var(--line);
+}
+
+.balance-pill .icon-tile {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
+
+.balance-pill .icon-tile [data-lucide] {
+    width: 15px;
+    height: 15px;
+}
+
+.balance-pill .cap {
+    font-size: .66rem;
+    color: var(--txt-muted);
+    line-height: 1;
+}
+
+.balance-pill .amt {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: .98rem;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+}
+
+.bell {
+    position: relative;
+}
+
+.bell .count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: var(--r-pill);
+    background: var(--bad);
+    color: #fff;
+    font-size: .64rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+}
+
+.user-chip {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .3rem .55rem .3rem .3rem;
+    border-radius: var(--r-pill);
+    border: 1px solid var(--line);
+    background: var(--field);
+    color: var(--txt);
+    transition: border-color var(--fast);
+}
+
+.user-chip:hover {
+    border-color: var(--accent);
+    color: var(--txt);
+}
+
+.user-chip img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-lg {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--line);
+}
+
+.content {
+    flex: 1 1 auto;
+    padding: 1.6rem 1.4rem 2.5rem;
+}
+
+.page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.4rem;
+}
+
+.page-head h1 {
+    font-size: 1.9rem;
+    margin: 0 0 .2rem;
+}
+
+.page-head .lede {
+    color: var(--txt-muted);
+    font-size: .88rem;
+    margin: 0;
+}
+
+.foot {
+    border-top: 1px solid var(--line);
+    padding: 1rem 1.4rem;
+    color: var(--txt-dim);
+    font-size: .8rem;
+}
+
+/* ============================================================
+   3. Notice ticker
+   ============================================================ */
+
+.ticker {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: .5rem 1.4rem;
+    overflow: hidden;
+    font-size: .82rem;
+}
+
+.ticker .ticker-tag {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    color: var(--accent);
+    font-weight: 600;
+    flex: 0 0 auto;
+}
+
+.ticker-view {
+    flex: 1 1 auto;
+    overflow: hidden;
+    mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent);
+}
+
+.ticker-track {
+    display: flex;
+    gap: 3rem;
+    width: max-content;
+    animation: ticker-slide 34s linear infinite;
+}
+
+.ticker-view:hover .ticker-track {
+    animation-play-state: paused;
+}
+
+/* Too little text to fill the rail twice - scrolling it would leave a gap. */
+.ticker-track.still {
+    animation: none;
+}
+
+.ticker-static {
+    display: flex;
+    gap: 2rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.ticker-static::-webkit-scrollbar {
+    display: none;
+}
+
+.ticker-static a {
+    color: var(--txt-muted);
+    white-space: nowrap;
+}
+
+.ticker-static a:hover {
+    color: var(--txt);
+}
+
+.ticker-track a {
+    color: var(--txt-muted);
+    white-space: nowrap;
+}
+
+.ticker-track a:hover {
+    color: var(--txt);
+}
+
+@keyframes ticker-slide {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+/* ============================================================
+   4. Toasts
+   ============================================================ */
+
+.toast-stack {
+    position: fixed;
+    top: 88px;
+    right: 20px;
+    z-index: 1090;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    max-width: min(380px, calc(100vw - 40px));
+}
+
+.toast-item {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    padding: .8rem 1rem;
+    border-radius: var(--r-md);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, .4);
+    font-size: .85rem;
+    animation: toast-in .35s var(--ease);
+}
+
+.toast-item.out {
+    animation: toast-out .3s var(--ease) forwards;
+}
+
+.toast-item.ok   { border-left: 3px solid var(--ok); }
+.toast-item.bad  { border-left: 3px solid var(--bad); }
+.toast-item.warn { border-left: 3px solid var(--warn); }
+.toast-item.info { border-left: 3px solid var(--info); }
+
+.toast-item .toast-x {
+    margin-left: auto;
+    background: none;
+    border: 0;
+    color: var(--txt-dim);
+    line-height: 1;
+    padding: 0;
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes toast-out {
+    to { opacity: 0; transform: translateX(24px); }
+}
+
+/* ============================================================
+   5. Backdrop and responsive
+   ============================================================ */
+
+.side-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 4, 8, .6);
+    z-index: 1035;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--slow);
+}
+
+.side-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+@media (max-width: 991.98px) {
+    .side {
+        transform: translateX(-100%);
+        width: var(--sidebar-w);
+    }
+
+    .side.open {
+        transform: none;
+    }
+
+    .app.mini .side {
+        width: var(--sidebar-w);
+    }
+
+    .app.mini .side-brand,
+    .app.mini .side-link {
+        justify-content: flex-start;
+        padding-left: .8rem;
+        padding-right: .8rem;
+    }
+
+    .app.mini .side-brand .words,
+    .app.mini .side-link .label,
+    .app.mini .side-link .count,
+    .app.mini .side-sec {
+        opacity: 1;
+        width: auto;
+        height: auto;
+    }
+
+    .app.mini .side-link::after {
+        content: none;
+    }
+
+    .main,
+    .app.mini .main {
+        margin-left: 0;
+    }
+
+    .content {
+        padding: 1.2rem 1rem 2rem;
+    }
+
+    .topbar {
+        padding: .7rem 1rem;
+        min-height: 64px;
+    }
+
+    .ticker {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .page-head h1 {
+        font-size: 1.55rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .topbar .page-name {
+        display: none;
+    }
+}
+
+/* ============================================================
+   6. Ambient background
+   ============================================================ */
+
+/* Fixed, non-interactive layer behind the panel: a drifting node network drawn
+   on canvas by assets/js/bg-net.js, over two slow light fields that give the
+   flat canvas some depth. The canvas ships empty, so with JS off this degrades
+   to the plain background. Colours are tokens so the theme toggle repaints. */
+
+:root,
+[data-theme="dark"] {
+    --fx-sheen:  rgba(87, 91, 235, .20);
+    --fx-warm:   rgba(139, 92, 246, .13);
+    --fx-node:   rgba(203, 213, 225, .5);
+    --fx-link:   129, 140, 248;          /* rgb triplet - the script sets the alpha */
+    --fx-packet: rgba(167, 139, 250, .95);
+    --fx-glow:   rgba(139, 92, 246, .55);
+    --fx-net-op: .8;
+}
+
+[data-theme="light"] {
+    --fx-sheen:  rgba(87, 91, 235, .13);
+    --fx-warm:   rgba(14, 165, 233, .1);
+    --fx-node:   rgba(71, 85, 105, .45);
+    --fx-link:   79, 70, 229;
+    --fx-packet: rgba(79, 70, 229, .9);
+    --fx-glow:   rgba(87, 91, 235, .4);
+    --fx-net-op: .55;
+}
+
+.bg-fx {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.bg-fx .fx-net {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: var(--fx-net-op);
+}
+
+/* Wide, soft light drifting across the page and back. */
+.bg-fx .fx-sheen {
+    position: absolute;
+    top: -60vh;
+    left: -30vw;
+    width: 90vw;
+    height: 140vh;
+    background: radial-gradient(closest-side ellipse, var(--fx-sheen), transparent 100%);
+    will-change: transform;
+    animation: fx-sheen 46s var(--ease) infinite alternate;
+}
+
+/* Second, cooler pass the other way so the two never line up. */
+.bg-fx .fx-sheen-2 {
+    top: auto;
+    bottom: -70vh;
+    left: auto;
+    right: -30vw;
+    background: radial-gradient(closest-side ellipse, var(--fx-warm), transparent 100%);
+    animation: fx-sheen-2 62s var(--ease) infinite alternate;
+}
+
+@keyframes fx-sheen {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(48vw, 8vh, 0); }
+}
+
+@keyframes fx-sheen-2 {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-42vw, -10vh, 0); }
+}
+
+/* Calm setting: the script already draws a single still frame, and the global
+   reduced-motion rule in ui.css freezes the sheens. */
