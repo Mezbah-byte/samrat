@@ -47,7 +47,7 @@ class Deposit_methods extends Admin_Controller {
 			$this->form_validation->set_rules('name', 'Name', 'required|trim|max_length[80]');
 			$this->form_validation->set_rules('network', 'Network', 'required|trim|max_length[30]');
 			$this->form_validation->set_rules('currency', 'Currency', 'required|trim|max_length[20]');
-			$this->form_validation->set_rules('wallet_address', 'Wallet Address', 'required|trim|min_length[20]|max_length[191]');
+			$this->form_validation->set_rules('wallet_address', 'Wallet Address', 'required|trim|min_length[2]|max_length[191]');
 			$this->form_validation->set_rules('min_amount', 'Minimum Amount', 'numeric');
 			$this->form_validation->set_rules('status', 'Status', 'required|in_list[active,inactive]');
 

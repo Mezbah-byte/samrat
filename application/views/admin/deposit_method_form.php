@@ -28,7 +28,7 @@
             </div>
             <div class="col-12">
               <label class="form-label">Wallet Address <span class="text-danger">*</span></label>
-              <input type="text" name="wallet_address" class="form-control mono" value="<?php echo set_value('wallet_address', $m->wallet_address); ?>" required minlength="20">
+              <input type="text" name="wallet_address" class="form-control mono" value="<?php echo set_value('wallet_address', $m->wallet_address); ?>" required minlength="2">
               <div class="form-text text-danger">Check this character by character. Every deposit will be sent here.</div>
             </div>
             <div class="col-md-4">
