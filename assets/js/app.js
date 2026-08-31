@@ -167,6 +167,30 @@
     }
 
     /**
+     * Google's ad server dedupes on `correlator`: send the same value twice and
+     * the second request comes back as an empty VAST, which reads on this page
+     * as "the network had nothing to show". Sample and GAM tags are normally
+     * pasted with the parameter left blank, so a fresh one is filled in per
+     * request. A tag that already carries a value is left alone.
+     */
+    function freshCorrelator(tag) {
+      var value = String(Date.now()) + String(Math.floor(Math.random() * 1000000));
+
+      if (/[?&]correlator=(&|$)/.test(tag)) {
+        return tag.replace(/([?&]correlator=)(&|$)/, '$1' + value + '$2');
+      }
+      if (/[?&]correlator=/.test(tag)) {
+        return tag;
+      }
+      // Only Google's endpoints take the parameter; other networks sign their
+      // tags and an extra query string can invalidate them.
+      if (/(doubleclick\.net|googlesyndication\.com|googleadservices\.com)/.test(tag)) {
+        return tag + (tag.indexOf('?') === -1 ? '?' : '&') + 'correlator=' + value;
+      }
+      return tag;
+    }
+
+    /**
      * VAST through IMA.
      *
      * The countdown always has to run out - no event can unlock the confirm
@@ -253,7 +277,7 @@
           imaLdr.addEventListener(ima.AdErrorEvent.Type.AD_ERROR, degrade, false);
 
           var req = new ima.AdsRequest();
-          req.adTagUrl = tag;
+          req.adTagUrl = freshCorrelator(tag);
           req.linearAdSlotWidth  = 640;
           req.linearAdSlotHeight = 360;
           imaLdr.requestAds(req);

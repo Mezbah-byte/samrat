@@ -74,7 +74,7 @@
   <div class="form-check mt-3 mb-4">
     <input class="form-check-input" type="checkbox" name="agree" id="agree" value="1" <?php echo set_checkbox('agree', '1'); ?> required>
     <label class="form-check-label small" for="agree">
-      I understand that deposits are made in cryptocurrency, are irreversible, and that returns are not guaranteed.
+      I agree to all the terms and conditions.
     </label>
   </div>
 
