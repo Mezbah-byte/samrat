@@ -11,9 +11,8 @@
 --
 --   mysql -u root samrat_db < database/upgrade_referral_generations.sql
 --
--- Idempotent enough to re-run: the CREATE is IF NOT EXISTS and the seed uses
--- INSERT IGNORE, but the ALTER on referral_commissions will error the second
--- time (duplicate column) - that error is harmless.
+-- Re-runnable. Every schema change below checks information_schema first, so a
+-- database already built from database/schema.sql just skips them silently.
 -- ---------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `referral_levels` (
@@ -35,11 +34,38 @@ INSERT IGNORE INTO `referral_levels` (`level`,`percent`,`status`) VALUES
   (3, 1, 'active');
 
 -- One commission row per deposit per generation.
-ALTER TABLE `referral_commissions`
-  ADD COLUMN `level` TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER `referred_id`,
-  DROP INDEX `uq_refcom_deposit`,
-  ADD UNIQUE KEY `uq_refcom_deposit_level` (`deposit_id`,`level`),
-  ADD KEY `ix_refcom_level` (`level`);
+-- Each step is a no-op when the database already has it.
+
+SET @sql := (SELECT IF(COUNT(*) = 0,
+  'ALTER TABLE `referral_commissions` ADD COLUMN `level` TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT ''generation the referrer sits at'' AFTER `referred_id`',
+  'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'referral_commissions' AND COLUMN_NAME = 'level');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (SELECT IF(COUNT(*) = 0,
+  'ALTER TABLE `referral_commissions` ADD UNIQUE KEY `uq_refcom_deposit_level` (`deposit_id`,`level`)',
+  'SELECT 1')
+  FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'referral_commissions' AND INDEX_NAME = 'uq_refcom_deposit_level');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (SELECT IF(COUNT(*) = 0,
+  'ALTER TABLE `referral_commissions` ADD KEY `ix_refcom_level` (`level`)',
+  'SELECT 1')
+  FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'referral_commissions' AND INDEX_NAME = 'ix_refcom_level');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Old one-row-per-deposit unique key, only present on pre-upgrade databases.
+-- Dropped last: it is the only index covering `deposit_id` until the new
+-- unique key above exists, and fk_refcom_deposit needs one.
+SET @sql := (SELECT IF(COUNT(*) > 0,
+  'ALTER TABLE `referral_commissions` DROP INDEX `uq_refcom_deposit`',
+  'SELECT 1')
+  FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'referral_commissions' AND INDEX_NAME = 'uq_refcom_deposit');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- The rate now lives in referral_levels, so drop the setting that used to hold
 -- it and add the two rules that decide who in the upline qualifies.

@@ -76,9 +76,22 @@ $query_builder = TRUE;
 $db['default'] = array(
 	'dsn'	=> '',
 	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => '',
-	'database' => 'samrat_db',
+
+
+	// 'username' => 'root',
+	// 'password' => '',
+	// 'database' => 'samrat_db',
+
+
+	// 'username' => 'shohafas_main',
+	// 'password' => 'Xy+c&tW+Po~rA=g%',
+	// 'database' => 'shohafas_global_ads',
+
+	'username' => 'globala1_main',
+	'password' => '@axEmPE4K3pHJP8',
+	'database' => 'globala1_main',
+
+
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
