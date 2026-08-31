@@ -32,13 +32,24 @@
                 <input type="number" step="0.01" name="<?php echo html_escape($row->key); ?>" class="form-control" value="<?php echo html_escape($row->value); ?>">
 
               <?php elseif ($row->type === 'image'): ?>
-                <?php if ($row->value): ?>
+                <?php
+                  // Nothing uploaded yet still gets a preview for the logo, because
+                  // the site falls back to the bundled mark rather than to nothing.
+                  $preview = $row->value
+                    ? upload_url('logo', $row->value)
+                    : ($row->key === 'logo' ? logo_url() : '');
+                ?>
+                <?php if ($preview): ?>
                   <div class="d-flex align-items-center gap-3 mb-2">
-                    <img src="<?php echo upload_url('logo', $row->value); ?>" style="max-height:56px" class="rounded border p-1" alt="">
-                    <div class="form-check">
-                      <input class="form-check-input" type="checkbox" name="remove_<?php echo html_escape($row->key); ?>" id="rm_<?php echo html_escape($row->key); ?>" value="1">
-                      <label class="form-check-label small text-danger" for="rm_<?php echo html_escape($row->key); ?>">Remove</label>
-                    </div>
+                    <img src="<?php echo $preview; ?>" style="max-height:56px" class="rounded border p-1" alt="">
+                    <?php if ($row->value): ?>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="remove_<?php echo html_escape($row->key); ?>" id="rm_<?php echo html_escape($row->key); ?>" value="1">
+                        <label class="form-check-label small text-danger" for="rm_<?php echo html_escape($row->key); ?>">Remove</label>
+                      </div>
+                    <?php else: ?>
+                      <span class="small text-muted">Built-in default &mdash; upload a file to replace it.</span>
+                    <?php endif; ?>
                   </div>
                 <?php endif; ?>
                 <input type="file" name="<?php echo html_escape($row->key); ?>" class="form-control" accept="image/*">

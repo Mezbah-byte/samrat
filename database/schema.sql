@@ -456,7 +456,7 @@ INSERT INTO `ads` (`title`,`type`,`source`,`vast_url`,`body`,`watch_seconds`,`pl
 ('Video ad 4','video','vast','https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=','Watch the video through to the end to bank this one.',15,'daily_task',4,'active');
 
 INSERT INTO `settings` (`key`,`value`,`group`,`type`,`label`,`sort_order`) VALUES
-('company_name','Samrat Invest','general','text','Company Name',1),
+('company_name','Global Ads','general','text','Company Name',1),
 ('company_tagline','Invest smart. Earn daily.','general','text','Tagline',2),
 ('logo','','general','image','Logo',3),
 ('favicon','','general','image','Favicon',4),
