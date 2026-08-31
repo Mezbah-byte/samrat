@@ -63,12 +63,23 @@ class Ad_model extends MY_Model {
 
 	public function global_ads($limit = 5)
 	{
+		// Off day: nothing is served anywhere, promo slots included.
+		if (is_off_day())
+		{
+			return array();
+		}
+
 		$this->live('global');
 		return $this->db->limit((int) $limit)->get($this->table)->result();
 	}
 
 	public function daily_task_ads($limit = NULL)
 	{
+		if (is_off_day())
+		{
+			return array();
+		}
+
 		$this->live('daily_task');
 		if ($limit)
 		{

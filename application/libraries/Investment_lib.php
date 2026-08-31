@@ -287,6 +287,13 @@ class Investment_lib {
 		$today = date('Y-m-d');
 		$db    = $this->CI->db;
 
+		// The off day is enforced here, not only in the ad list: the list is a
+		// page render, this is the only thing a POST can reach.
+		if (is_off_day($today))
+		{
+			return $this->ad_result(FALSE, $this->off_day_message($today), 0, $user_id);
+		}
+
 		$ad = $this->CI->ad_model->find($ad_id);
 		if ( ! $ad || $ad->status !== 'active')
 		{
@@ -398,6 +405,14 @@ class Investment_lib {
 	 */
 	public function ensure_day_row($investment_id, $user_id, $date, $amount, $ads_required)
 	{
+		// An off day serves no ads, so a row for it could never be completed and
+		// would only be marked missed by the cron. It is never opened at all:
+		// the day pays nothing and costs nothing.
+		if (is_off_day($date))
+		{
+			return NULL;
+		}
+
 		$existing = $this->CI->daily_earning_model->for_investment_date($investment_id, $date);
 		if ($existing)
 		{
@@ -445,7 +460,7 @@ class Investment_lib {
 
 			for ($d = $from; strtotime($d) <= strtotime($limit); $d = date('Y-m-d', strtotime($d.' +1 day')))
 			{
-				if (strtotime($d) < strtotime($inv->start_date))
+				if (strtotime($d) < strtotime($inv->start_date) || is_off_day($d))
 				{
 					continue;
 				}
@@ -528,13 +543,27 @@ class Investment_lib {
 			}
 		}
 
+		$off = is_off_day($today);
+
 		return array(
 			'required'  => $required,
 			'watched'   => min($watched, max($required, $watched)),
-			'remaining' => max(0, $required - $watched),
+			'remaining' => $off ? 0 : max(0, $required - $watched),
 			'complete'  => ($required > 0 && $watched >= $required),
 			'pending'   => $pending,
 			'earned'    => $earned,
+			'off_day'   => $off,
+			'off_note'  => $off ? $this->off_day_message($today) : NULL,
+			'resumes_on' => $off ? next_working_day($today) : NULL,
 		);
+	}
+
+	/** Wording used by both the API and the ads page on an off day. */
+	protected function off_day_message($date = NULL)
+	{
+		$date = $date ?: date('Y-m-d');
+
+		return 'Today is '.date('l', strtotime($date)).', a scheduled off day - no ads run and no daily'
+			.' target is due. Ads resume on '.date('l, d M Y', strtotime(next_working_day($date))).'.';
 	}
 }

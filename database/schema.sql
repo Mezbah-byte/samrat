@@ -464,6 +464,7 @@ INSERT INTO `settings` (`key`,`value`,`group`,`type`,`label`,`sort_order`) VALUE
 ('support_email','support@samrat.test','general','text','Support Email',6),
 ('support_telegram','','general','text','Telegram',7),
 ('footer_text','All rights reserved.','general','text','Footer Text',8),
+('off_days','0','general','text','Weekly Off Days (0=Sun ... 6=Sat, comma separated)',9),
 ('withdrawal_fee_percent','5','finance','number','Withdrawal Fee (%)',1),
 ('withdrawal_enabled','1','finance','boolean','Withdrawals Enabled',3),
 ('deposit_enabled','1','finance','boolean','Deposits Enabled',4),

@@ -3,7 +3,9 @@
 <div class="page-head reveal" data-reveal-order="0">
   <div>
     <h1>Daily Ads</h1>
-    <p class="lede"><?php echo date('l, d M Y'); ?> &middot; finish the quota to unlock today's profit.</p>
+    <p class="lede"><?php echo date('l, d M Y'); ?> &middot;
+      <?php echo ! empty($progress['off_day']) ? 'off day - no ads run today.' : "finish the quota to unlock today's profit."; ?>
+    </p>
   </div>
   <a href="<?php echo base_url('dashboard'); ?>" class="btn btn-ghost"><i data-lucide="layout-dashboard"></i> Dashboard</a>
 </div>
@@ -15,6 +17,12 @@
         <i data-lucide="package-open"></i>
         <p class="mb-3">You need an active plan before ads count toward anything.</p>
         <a href="<?php echo base_url('packages'); ?>" class="btn btn-grad"><i data-lucide="box"></i> Browse Packages</a>
+      </div>
+    <?php elseif ( ! empty($progress['off_day'])): ?>
+      <div class="empty-state">
+        <i data-lucide="coffee"></i>
+        <p class="mb-2 fw-semibold">Off day &mdash; no ads today</p>
+        <p class="mb-0 small text-muted"><?php echo html_escape($progress['off_note']); ?></p>
       </div>
     <?php else: ?>
       <div class="d-flex flex-wrap align-items-center gap-4">
@@ -80,7 +88,7 @@
 </div>
 <?php endif; ?>
 
-<?php if ($progress['required'] > 0): /* No plan, no quota - and no ad list. */ ?>
+<?php if ($progress['required'] > 0 && empty($progress['off_day'])): /* No plan or an off day means no ad list. */ ?>
 <div class="panel reveal" data-reveal-order="3">
   <div class="panel-head">
     <i data-lucide="play-circle"></i> Available Ads

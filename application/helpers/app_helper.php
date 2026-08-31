@@ -80,6 +80,94 @@ if ( ! function_exists('logo_url'))
 	}
 }
 
+if ( ! function_exists('off_days'))
+{
+	/**
+	 * Weekdays the platform runs no ads on, as PHP date('w') numbers
+	 * (0 = Sunday). Kept in a setting so an admin can move the off day, add a
+	 * second one, or clear it entirely without a deploy.
+	 */
+	function off_days()
+	{
+		static $days = NULL;
+
+		if ($days === NULL)
+		{
+			$days = array();
+
+			foreach (explode(',', (string) setting('off_days', '0')) as $d)
+			{
+				$d = trim($d);
+				if ($d !== '' && ctype_digit($d) && (int) $d <= 6)
+				{
+					$days[] = (int) $d;
+				}
+			}
+
+			$days = array_values(array_unique($days));
+		}
+
+		return $days;
+	}
+}
+
+if ( ! function_exists('is_off_day'))
+{
+	/** TRUE when no ad may be served on the given date (today by default). */
+	function is_off_day($date = NULL)
+	{
+		$days = off_days();
+
+		if (empty($days))
+		{
+			return FALSE;
+		}
+
+		$ts = $date ? strtotime($date) : time();
+
+		return $ts ? in_array((int) date('w', $ts), $days, TRUE) : FALSE;
+	}
+}
+
+if ( ! function_exists('next_working_day'))
+{
+	/** The next date that is not an off day, as Y-m-d. */
+	function next_working_day($date = NULL)
+	{
+		$ts = ($date ? strtotime($date) : time()) ?: time();
+
+		// Seven hops is enough unless every weekday is off, in which case the
+		// loop gives up and returns tomorrow rather than spinning.
+		for ($i = 1; $i <= 7; $i++)
+		{
+			$next = date('Y-m-d', strtotime('+'.$i.' day', $ts));
+			if ( ! is_off_day($next))
+			{
+				return $next;
+			}
+		}
+
+		return date('Y-m-d', strtotime('+1 day', $ts));
+	}
+}
+
+if ( ! function_exists('off_day_names'))
+{
+	/** Human list of the configured off days, e.g. "Sunday". */
+	function off_day_names()
+	{
+		$names = array();
+
+		foreach (off_days() as $d)
+		{
+			// 1970-01-04 was a Sunday, so adding the weekday number lands on it.
+			$names[] = date('l', strtotime('1970-01-04 +'.$d.' day'));
+		}
+
+		return $names;
+	}
+}
+
 if ( ! function_exists('badge'))
 {
 	/** Bootstrap badge markup for the status enums used across the app. */

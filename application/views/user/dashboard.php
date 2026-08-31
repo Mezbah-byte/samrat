@@ -58,6 +58,12 @@ $ring_pct = ($progress['required'] > 0)
             <p class="mb-3">No active plan yet. Buy a package to start earning daily.</p>
             <a href="<?php echo base_url('packages'); ?>" class="btn btn-grad"><i data-lucide="box"></i> Browse Packages</a>
           </div>
+        <?php elseif ( ! empty($progress['off_day'])): ?>
+          <div class="empty-state">
+            <i data-lucide="coffee"></i>
+            <p class="mb-2 fw-semibold">Off day &mdash; no ads today</p>
+            <p class="mb-0 small text-muted"><?php echo html_escape($progress['off_note']); ?></p>
+          </div>
         <?php else: ?>
           <div class="d-flex flex-wrap align-items-center gap-4">
             <div class="ring">
