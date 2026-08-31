@@ -23,8 +23,8 @@ class Investment_lib {
 		$this->CI->load->database();
 		$this->CI->load->model(array(
 			'user_model', 'package_model', 'deposit_model', 'investment_model',
-			'daily_earning_model', 'referral_model', 'ad_model', 'notification_model',
-			'setting_model',
+			'daily_earning_model', 'referral_model', 'referral_level_model',
+			'ad_model', 'notification_model', 'setting_model',
 		));
 		$this->CI->load->library('wallet_lib');
 	}
@@ -153,8 +153,21 @@ class Investment_lib {
 	}
 
 	/**
-	 * Level-1, one-time commission on the deposit amount. The unique index on
-	 * referral_commissions.deposit_id is the real guarantee against paying twice.
+	 * One-time commission on the deposit amount, paid up the referral tree.
+	 *
+	 * Generation 1 is the depositor's own referrer, generation 2 the person who
+	 * referred them, and so on for as many rows as `referral_levels` holds. The
+	 * rates, which generations are switched on, and the two eligibility rules
+	 * all come out of the database - nothing here is hard-coded.
+	 *
+	 * The walk climbs every generation that exists, not only the paying ones, so
+	 * switching generation 2 off leaves 1 and 3 earning instead of cutting the
+	 * tree short at 2. A generation with no rate is skipped silently.
+	 *
+	 * The unique index on (deposit_id, level) is the real guarantee against
+	 * paying the same generation twice.
+	 *
+	 * @return int how many generations were paid
 	 */
 	protected function pay_referral_commission($deposit)
 	{
@@ -162,53 +175,101 @@ class Investment_lib {
 
 		if ( ! $user || ! $user->referred_by)
 		{
-			return FALSE;
+			return 0;
 		}
-		if ($this->CI->referral_model->paid_for_deposit($deposit->id))
+
+		$rates = $this->CI->referral_level_model->active_map();
+		$depth = $this->CI->referral_level_model->max_level();
+
+		if (empty($rates) || $depth < 1)
 		{
-			return FALSE;
+			return 0;
 		}
 
-		$referrer = $this->CI->user_model->find($user->referred_by);
-		if ( ! $referrer || $referrer->status !== 'active')
+		$require_active   = (int) $this->CI->setting_model->get('referral_require_active_upline', 1) === 1;
+		$require_invested = (int) $this->CI->setting_model->get('referral_require_upline_investment', 0) === 1;
+
+		$paid    = 0;
+		$current = $user;
+		// A referred_by cycle would otherwise spin until the level cap. Seeded
+		// with the depositor, so a tree pointing back at them also stops.
+		$seen    = array((int) $user->id => TRUE);
+
+		for ($level = 1; $level <= $depth; $level++)
 		{
-			return FALSE;
+			if (empty($current->referred_by))
+			{
+				break;
+			}
+
+			$upline_id = (int) $current->referred_by;
+
+			if (isset($seen[$upline_id]))
+			{
+				break;
+			}
+			$seen[$upline_id] = TRUE;
+
+			$upline = $this->CI->user_model->find($upline_id);
+			if ( ! $upline)
+			{
+				break;
+			}
+
+			$current = $upline;
+
+			if ( ! isset($rates[$level]))
+			{
+				continue;
+			}
+			if ($require_active && $upline->status !== 'active')
+			{
+				continue;
+			}
+			if ($require_invested && ! $this->CI->investment_model->active_for_user($upline->id))
+			{
+				continue;
+			}
+			if ($this->CI->referral_model->paid_for_deposit($deposit->id, $level))
+			{
+				continue;
+			}
+
+			$percent = (float) $rates[$level];
+			$amount  = round(((float) $deposit->amount * $percent) / 100, MONEY_SCALE);
+
+			if ($amount <= 0)
+			{
+				continue;
+			}
+
+			$commission_id = $this->CI->referral_model->insert(array(
+				'referrer_id' => $upline->id,
+				'referred_id' => $user->id,
+				'level'       => $level,
+				'deposit_id'  => $deposit->id,
+				'percent'     => $percent,
+				'amount'      => money_raw($amount),
+			));
+
+			$this->CI->wallet_lib->credit(
+				$upline->id, $amount, 'referral_bonus',
+				'referral_commissions', $commission_id,
+				$percent.'% generation '.$level.' commission from '.$user->username
+			);
+
+			$this->CI->notification_model->push(
+				$upline->id,
+				'Referral commission',
+				'You earned '.money($amount).' ('.$percent.'%, generation '.$level.') from '
+					.$user->username.'\'s deposit.',
+				'referral'
+			);
+
+			$paid++;
 		}
 
-		$percent = (float) $this->CI->setting_model->get('referral_percent', 5);
-		if ($percent <= 0)
-		{
-			return FALSE;
-		}
-
-		$amount = round(((float) $deposit->amount * $percent) / 100, MONEY_SCALE);
-		if ($amount <= 0)
-		{
-			return FALSE;
-		}
-
-		$commission_id = $this->CI->referral_model->insert(array(
-			'referrer_id' => $referrer->id,
-			'referred_id' => $user->id,
-			'deposit_id'  => $deposit->id,
-			'percent'     => $percent,
-			'amount'      => money_raw($amount),
-		));
-
-		$this->CI->wallet_lib->credit(
-			$referrer->id, $amount, 'referral_bonus',
-			'referral_commissions', $commission_id,
-			$percent.'% referral commission from '.$user->username
-		);
-
-		$this->CI->notification_model->push(
-			$referrer->id,
-			'Referral commission',
-			'You earned '.money($amount).' ('.$percent.'%) from '.$user->username.'\'s deposit.',
-			'referral'
-		);
-
-		return $commission_id;
+		return $paid;
 	}
 
 	/* =================================================================

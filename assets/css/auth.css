@@ -1,7 +1,19 @@
 /* Auth pages - dark room with a pull-cord lamp; the form is frosted glass.
    Loaded only by layouts/auth.php, after app.css, so it may override freely. */
 
+/* app.css declares a light scheme for the admin panel; these pages are dark,
+   so take the root back. Native scrollbars and popups follow this. */
+:root {
+    color-scheme: dark;
+}
+
 .auth-lamp {
+    /* Windows Chrome draws select popups, autofill and scrollbars from the UA
+       colour scheme, not from our CSS. Without this the option list came up on
+       a white system background while auth.css painted the text #fff - white on
+       white. Declaring the scheme makes the native parts match the dark room. */
+    color-scheme: dark;
+
     --bg-off:      #121417;
     --bg-on:       #1c1f24;
     --lamp-shade:  #f5f0e6;
@@ -288,9 +300,17 @@
     padding-right: 2.6rem;
 }
 
-.auth-panel .form-select option {
+.auth-panel .form-select option,
+.auth-panel .form-select optgroup {
     background: var(--bg-on);
     color: #fff;
+}
+
+/* Chrome shows the first option in the closed select too - a placeholder that
+   inherits #fff would vanish against the field on any renderer that ignores
+   the option colours above. */
+.auth-panel .form-select option[value=""] {
+    color: #9aa0a6;
 }
 
 .auth-panel .form-control-sm {

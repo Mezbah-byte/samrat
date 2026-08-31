@@ -5,13 +5,14 @@ class Referrals extends Admin_Controller {
 
 	public function index()
 	{
-		$this->load->model('referral_model');
+		$this->load->model(array('referral_model', 'referral_level_model'));
 
 		$per_page = 25;
 		$page     = max(1, (int) $this->input->get('page'));
 		$search   = $this->input->get('q', TRUE) ?: '';
+		$level    = max(0, (int) $this->input->get('level'));
 
-		$result = $this->referral_model->paginate_admin($per_page, ($page - 1) * $per_page, $search);
+		$result = $this->referral_model->paginate_admin($per_page, ($page - 1) * $per_page, $search, $level);
 
 		$paid = $this->db->select_sum('amount', 'total')->get('referral_commissions')->row();
 
@@ -23,8 +24,11 @@ class Referrals extends Admin_Controller {
 			'per_page'    => $per_page,
 			'page'        => $page,
 			'search'      => $search,
+			'level'       => $level,
 			'paid_total'  => (float) ($paid->total ?: 0),
-			'percent'     => (float) $this->setting_model->get('referral_percent', 5),
+			'ladder'      => $this->referral_level_model->ladder(),
+			'total_pct'   => $this->referral_level_model->total_percent(),
+			'paid_levels' => $this->referral_model->totals_by_level(),
 			'leaderboard' => $this->referral_model->leaderboard(10),
 		));
 	}

@@ -7,7 +7,7 @@
 <link rel="icon" href="<?php echo logo_url(); ?>">
 <link rel="stylesheet" href="<?php echo base_url('assets/vendor/bootstrap/css/bootstrap.min.css'); ?>">
 <link rel="stylesheet" href="<?php echo base_url('assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css'); ?>">
-<link rel="stylesheet" href="<?php echo base_url('assets/css/app.css'); ?>">
+<link rel="stylesheet" href="<?php echo base_url('assets/css/app.css').'?v='.filemtime(FCPATH.'assets/css/app.css'); ?>">
 </head>
 <body>
 
@@ -35,6 +35,7 @@
     <a class="nav-link <?php echo active_if($active_menu, 'investments'); ?>" href="<?php echo base_url('admin/investments'); ?>"><i class="bi bi-graph-up-arrow"></i> Investments</a>
     <a class="nav-link <?php echo active_if($active_menu, 'transactions'); ?>" href="<?php echo base_url('admin/transactions'); ?>"><i class="bi bi-list-columns-reverse"></i> Transactions</a>
     <a class="nav-link <?php echo active_if($active_menu, 'referrals'); ?>" href="<?php echo base_url('admin/referrals'); ?>"><i class="bi bi-diagram-3"></i> Referrals</a>
+    <a class="nav-link <?php echo active_if($active_menu, 'referral_levels'); ?>" href="<?php echo base_url('admin/referral-levels'); ?>"><i class="bi bi-bar-chart-steps"></i> Referral Levels</a>
   </nav>
 
   <div class="nav-section">Manage</div>
@@ -93,6 +94,6 @@
 </div>
 
 <script src="<?php echo base_url('assets/vendor/bootstrap/js/bootstrap.bundle.min.js'); ?>"></script>
-<script src="<?php echo base_url('assets/js/app.js'); ?>"></script>
+<script src="<?php echo base_url('assets/js/app.js').'?v='.filemtime(FCPATH.'assets/js/app.js'); ?>"></script>
 </body>
 </html>

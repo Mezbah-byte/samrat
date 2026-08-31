@@ -6,8 +6,10 @@
  * indigo for the brand, green for money, amber for rewards - because a flat
  * near-black page reads as unfinished.
  *
- * Motion budget stays small: entrance fades, the ad that is playing, hover
- * states. Nothing loops in the background.
+ * Motion budget: entrance fades, the ad that is playing, hover states, and one
+ * slow drifting wash behind the hero and the call to action. Everything that
+ * loops is decoration inside aria-hidden markup, and stops dead under
+ * prefers-reduced-motion.
  *
  * Depends on the tokens in ui.css. */
 
@@ -29,6 +31,10 @@
     --lp-tint:   rgba(87, 91, 235, .16);
     --lp-tint-2: rgba(245, 158, 11, .12);
     --lp-card:   var(--panel);
+    --lp-orb-a:  rgba(87, 91, 235, .50);
+    --lp-orb-b:  rgba(245, 158, 11, .26);
+    --lp-orb-c:  rgba(16, 185, 129, .22);
+    --lp-mesh:   rgba(255, 255, 255, .05);
 }
 
 [data-theme="light"] {
@@ -37,6 +43,10 @@
     --lp-tint:   rgba(87, 91, 235, .12);
     --lp-tint-2: rgba(245, 158, 11, .1);
     --lp-card:   #fff;
+    --lp-orb-a:  rgba(87, 91, 235, .30);
+    --lp-orb-b:  rgba(245, 158, 11, .18);
+    --lp-orb-c:  rgba(16, 185, 129, .13);
+    --lp-mesh:   rgba(20, 25, 60, .06);
 }
 
 /* ============================================================
@@ -123,7 +133,7 @@ body.ui .lp-q summary {
 }
 
 /* ============================================================
-   3. Buttons, links, email field
+   3. Buttons, links, call to action
    ============================================================ */
 
 .lp-btn {
@@ -194,35 +204,19 @@ body.ui .lp-q summary {
     transform: translateX(3px);
 }
 
-/* One field plus a button. The address is carried over to the real form. */
-.lp-form {
+/* The landing page asks for nothing. One button, and the register screen
+   collects the details on its own. */
+.lp-actions {
     display: flex;
-    gap: .5rem;
-    max-width: 30rem;
+    flex-wrap: wrap;
+    gap: .6rem;
     margin: 1.75rem 0 .7rem;
 }
 
-.lp-form input {
-    flex: 1 1 auto;
-    min-width: 0;
-    min-height: 48px;
-    padding: 0 1rem;
-    border: 1px solid var(--line);
-    border-radius: var(--r-sm);
-    background: var(--panel);
-    color: var(--txt);
-    font-size: .92rem;
-    transition: border-color var(--fast), box-shadow var(--fast);
-}
-
-.lp-form input::placeholder {
-    color: var(--txt-dim);
-}
-
-.lp-form input:focus {
-    outline: 0;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(87, 91, 235, .22);
+.lp-btn-lg {
+    min-height: 54px;
+    padding: 0 1.9rem;
+    font-size: 1rem;
 }
 
 .lp-form-note {
@@ -242,15 +236,86 @@ body.ui .lp-q summary {
     border-bottom: 1px solid var(--line);
 }
 
-/* Static wash. An animated one was what made this page look cheap. */
+/* Living wash: a flat base gradient with three soft colour orbs drifting across
+   it on long out-of-sync loops, over a static mesh.
+
+   The orbs are radial gradients that fade to transparent, NOT blurred boxes.
+   filter: blur() on layers this size made the renderer unresponsive - it has to
+   re-raster a viewport-sized surface every frame. A gradient is one cheap paint
+   and only the transform animates, which stays on the compositor.
+
+   Decoration only - it sits inside an aria-hidden span. */
 .lp-hero-bg {
     position: absolute;
     inset: 0;
+    overflow: hidden;
     background:
         radial-gradient(70% 60% at 15% 0%, var(--lp-tint), transparent 70%),
-        radial-gradient(60% 55% at 85% 25%, var(--lp-tint-2), transparent 70%),
         linear-gradient(180deg, var(--lp-hero-1), var(--lp-hero-2) 78%);
     pointer-events: none;
+}
+
+.lp-orb {
+    position: absolute;
+    border-radius: 50%;
+    /* Gradient does most of the softening; a small blur kills the ring the
+       gradient's outer stop leaves behind. Kept low - a wide blur radius on a
+       layer this size is what makes the compositor crawl. */
+    filter: blur(36px);
+}
+
+.lp-orb-1 {
+    width: 640px;
+    height: 640px;
+    top: -220px;
+    left: -160px;
+    background: radial-gradient(circle closest-side, var(--lp-orb-a), transparent 76%);
+    animation: lp-drift-1 26s ease-in-out infinite;
+}
+
+.lp-orb-2 {
+    width: 520px;
+    height: 520px;
+    top: 40px;
+    right: -140px;
+    background: radial-gradient(circle closest-side, var(--lp-orb-b), transparent 76%);
+    animation: lp-drift-2 32s ease-in-out infinite;
+}
+
+.lp-orb-3 {
+    width: 460px;
+    height: 460px;
+    bottom: -220px;
+    left: 38%;
+    background: radial-gradient(circle closest-side, var(--lp-orb-c), transparent 76%);
+    animation: lp-drift-3 38s ease-in-out infinite;
+}
+
+/* Static - a moving mesh would drag its own mask along with it. */
+.lp-mesh {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(var(--lp-mesh) 1px, transparent 1px),
+        linear-gradient(90deg, var(--lp-mesh) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(75% 65% at 50% 25%, #000, transparent 78%);
+    mask-image: radial-gradient(75% 65% at 50% 25%, #000, transparent 78%);
+}
+
+@keyframes lp-drift-1 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50%      { transform: translate3d(90px, 60px, 0) scale(1.12); }
+}
+
+@keyframes lp-drift-2 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+    50%      { transform: translate3d(-110px, 70px, 0) scale(.9); }
+}
+
+@keyframes lp-drift-3 {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(.95); }
+    50%      { transform: translate3d(-80px, -90px, 0) scale(1.15); }
 }
 
 .lp-hero > .container {
@@ -984,12 +1049,20 @@ body.ui .lp-q summary {
     color: #fff;
 }
 
+/* Same idea as the hero, done with one oversized gradient sliding sideways. */
 .lp-cta-bg {
     position: absolute;
     inset: 0;
     background:
         radial-gradient(60% 80% at 15% 10%, rgba(255, 255, 255, .18), transparent 70%),
-        linear-gradient(120deg, #4b4fe0, #7c4ddb 55%, #b3499f);
+        linear-gradient(120deg, #4b4fe0, #7c4ddb 35%, #b3499f 65%, #4b4fe0);
+    background-size: 100% 100%, 220% 220%;
+    animation: lp-cta-pan 18s ease-in-out infinite;
+}
+
+@keyframes lp-cta-pan {
+    0%, 100% { background-position: 0 0, 0% 50%; }
+    50%      { background-position: 0 0, 100% 50%; }
 }
 
 .lp-cta-inner {
@@ -1009,24 +1082,8 @@ body.ui .lp-q summary {
     margin: 0;
 }
 
-.lp-cta .lp-form {
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.lp-cta .lp-form input {
-    background: rgba(255, 255, 255, .14);
-    border-color: rgba(255, 255, 255, .3);
-    color: #fff;
-}
-
-.lp-cta .lp-form input::placeholder {
-    color: rgba(255, 255, 255, .65);
-}
-
-.lp-cta .lp-form input:focus {
-    border-color: #fff;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
+.lp-cta .lp-actions {
+    justify-content: center;
 }
 
 .lp-cta .lp-form-note {
@@ -1036,6 +1093,11 @@ body.ui .lp-q summary {
 .lp-cta .lp-form-note a {
     color: #fff;
     text-decoration: underline;
+}
+
+/* Four rules read better as a 2x2 than as a row of three with an orphan. */
+.lp-rules {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 /* ============================================================
@@ -1072,13 +1134,23 @@ body.ui .lp-q summary {
 @media (max-width: 767.98px) {
     .lp-ways,
     .lp-why,
+    .lp-rules,
     .lp-flow {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .lp-form {
+    .lp-actions {
         flex-direction: column;
     }
+
+    .lp-actions .lp-btn {
+        width: 100%;
+    }
+
+    /* Smaller orbs, or a phone shows one flat colour field. */
+    .lp-orb-1 { width: 420px; height: 420px; top: -140px; left: -120px; }
+    .lp-orb-2 { width: 360px; height: 360px; right: -120px; }
+    .lp-orb-3 { width: 320px; height: 320px; bottom: -150px; }
 
     .lp-float {
         position: static;
@@ -1086,5 +1158,18 @@ body.ui .lp-q summary {
         max-width: none;
         margin-top: .75rem;
         box-shadow: none;
+    }
+}
+
+/* ============================================================
+   14. Reduced motion
+   ============================================================ */
+
+/* Everything that loops here is decoration, so it can stop outright. The page
+   reads the same with the wash held on its first frame. */
+@media (prefers-reduced-motion: reduce) {
+    .lp-orb,
+    .lp-cta-bg {
+        animation: none;
     }
 }

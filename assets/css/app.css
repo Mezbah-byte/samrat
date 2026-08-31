@@ -1,4 +1,8 @@
 :root {
+  /* Admin runs light-only. Saying so keeps Windows Chrome from drawing select
+     popups and autofill from a dark system scheme on a light page. */
+  color-scheme:   light;
+
   --brand:        #1e5eff;
   --brand-dark:   #1546c4;
   --brand-soft:   #eaf0ff;

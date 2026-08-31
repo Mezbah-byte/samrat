@@ -255,17 +255,30 @@ CREATE TABLE `withdrawals` (
 -- ---------------------------------------------------------------------
 -- Referral commissions (level 1, one-time, on approved deposit)
 -- ---------------------------------------------------------------------
+CREATE TABLE `referral_levels` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `level`      TINYINT UNSIGNED NOT NULL COMMENT '1 = direct referral',
+  `percent`    DECIMAL(8,4) NOT NULL DEFAULT 0,
+  `status`     ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_reflevel_level` (`level`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `referral_commissions` (
   `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `referrer_id` INT UNSIGNED NOT NULL,
   `referred_id` INT UNSIGNED NOT NULL,
+  `level`       TINYINT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'generation the referrer sits at',
   `deposit_id`  INT UNSIGNED NOT NULL,
   `percent`     DECIMAL(8,4)  NOT NULL,
   `amount`      DECIMAL(18,8) NOT NULL,
   `created_at`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_refcom_deposit` (`deposit_id`),
+  UNIQUE KEY `uq_refcom_deposit_level` (`deposit_id`,`level`),
   KEY `ix_refcom_referrer` (`referrer_id`,`created_at`),
+  KEY `ix_refcom_level` (`level`),
   CONSTRAINT `fk_refcom_referrer` FOREIGN KEY (`referrer_id`) REFERENCES `users` (`id`)    ON DELETE CASCADE,
   CONSTRAINT `fk_refcom_referred` FOREIGN KEY (`referred_id`) REFERENCES `users` (`id`)    ON DELETE CASCADE,
   CONSTRAINT `fk_refcom_deposit`  FOREIGN KEY (`deposit_id`)  REFERENCES `deposits` (`id`) ON DELETE CASCADE
@@ -298,9 +311,13 @@ CREATE TABLE `ads` (
   `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `title`         VARCHAR(150) NOT NULL,
   `type`          ENUM('image','video','banner','link') NOT NULL DEFAULT 'image',
+  `source`        ENUM('upload','embed','vast') NOT NULL DEFAULT 'upload' COMMENT 'where the creative comes from',
   `media`         VARCHAR(255) DEFAULT NULL,
+  `media_url`     VARCHAR(500) DEFAULT NULL COMMENT 'remote image or video file',
   `target_url`    VARCHAR(500) DEFAULT NULL,
   `body`          TEXT DEFAULT NULL,
+  `embed_code`    TEXT DEFAULT NULL COMMENT 'ad network HTML/JS tag',
+  `vast_url`      VARCHAR(500) DEFAULT NULL COMMENT 'VAST/VPAID tag URL',
   `watch_seconds` SMALLINT UNSIGNED NOT NULL DEFAULT 15,
   `placement`     ENUM('daily_task','global') NOT NULL DEFAULT 'daily_task',
   `total_views`   INT UNSIGNED NOT NULL DEFAULT 0,
@@ -418,9 +435,25 @@ INSERT INTO `packages` (`name`,`slug`,`price`,`daily_return_percent`,`duration_d
 ('Package 8', 'package-8',  5000.00000000, 2.0000, 100,  9,  500.00000000, 8, 'inactive', 'Reserved slot - edit from admin.'),
 ('Package 9', 'package-9', 10000.00000000, 2.0000, 100, 10, 1000.00000000, 9, 'inactive', 'Reserved slot - edit from admin.');
 
+-- Three generations out of the box. Add, edit or switch these off under
+-- Admin -> Referral Levels; nothing else in the app hard-codes a rate.
+INSERT INTO `referral_levels` (`level`,`percent`,`status`) VALUES
+(1,5,'active'),
+(2,2,'active'),
+(3,1,'active');
+
 INSERT INTO `deposit_methods` (`name`,`network`,`currency`,`wallet_address`,`min_amount`,`instructions`,`sort_order`,`status`) VALUES
 ('USDT TRC20','TRC20','USDT','TREPLACE_WITH_YOUR_TRON_ADDRESS',50,'Send only USDT over the TRON (TRC20) network. Sending any other token or using another network will lose the funds.',1,'active'),
 ('USDT BEP20','BEP20','USDT','0xREPLACE_WITH_YOUR_BSC_ADDRESS',50,'Send only USDT over the BNB Smart Chain (BEP20) network.',2,'active');
+
+-- Four playable video ads so the watch flow works the moment the app is
+-- installed. These are Google's public IMA sample VAST tags: real creatives,
+-- zero revenue. Replace each tag with your own network's under Admin -> Ads.
+INSERT INTO `ads` (`title`,`type`,`source`,`vast_url`,`body`,`watch_seconds`,`placement`,`sort_order`,`status`) VALUES
+('Video ad 1','video','vast','https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=','Watch the video through to the end to bank this one.',15,'daily_task',1,'active'),
+('Video ad 2','video','vast','https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dskippablelinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=','Watch the video through to the end to bank this one.',15,'daily_task',2,'active'),
+('Video ad 3','video','vast','https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dredirectlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=','Watch the video through to the end to bank this one.',15,'daily_task',3,'active'),
+('Video ad 4','video','vast','https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=','Watch the video through to the end to bank this one.',15,'daily_task',4,'active');
 
 INSERT INTO `settings` (`key`,`value`,`group`,`type`,`label`,`sort_order`) VALUES
 ('company_name','Samrat Invest','general','text','Company Name',1),
@@ -432,9 +465,10 @@ INSERT INTO `settings` (`key`,`value`,`group`,`type`,`label`,`sort_order`) VALUE
 ('support_telegram','','general','text','Telegram',7),
 ('footer_text','All rights reserved.','general','text','Footer Text',8),
 ('withdrawal_fee_percent','5','finance','number','Withdrawal Fee (%)',1),
-('referral_percent','5','finance','number','Referral Commission (%)',2),
 ('withdrawal_enabled','1','finance','boolean','Withdrawals Enabled',3),
 ('deposit_enabled','1','finance','boolean','Deposits Enabled',4),
+('referral_require_active_upline','1','finance','boolean','Pay only active upline accounts',5),
+('referral_require_upline_investment','0','finance','boolean','Upline must hold an active plan to earn',6),
 ('registration_open','1','system','boolean','Registration Open',1),
 ('maintenance_mode','0','system','boolean','Maintenance Mode',2),
 ('maintenance_message','We are performing scheduled maintenance. Please check back soon.','system','textarea','Maintenance Message',3),

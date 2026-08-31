@@ -77,7 +77,10 @@ class Auth extends Public_Controller {
 			$this->form_validation->set_rules('country', 'Country', 'required|trim|max_length[80]');
 			$this->form_validation->set_rules('password', 'Password', 'required|min_length[6]|max_length[100]');
 			$this->form_validation->set_rules('confirm_password', 'Confirm Password', 'required|matches[password]');
-			$this->form_validation->set_rules('referral_code', 'Referral ID', 'trim|max_length[16]');
+			// Auth_lib is what checks the ID resolves to an active account, and
+			// waives it for the very first user on an empty install.
+			$this->form_validation->set_rules('referral_code', 'Referral ID',
+				$this->user_model->count_by() > 0 ? 'required|trim|max_length[16]' : 'trim|max_length[16]');
 			$this->form_validation->set_rules('agree', 'Terms', 'required');
 
 			if ($this->form_validation->run())

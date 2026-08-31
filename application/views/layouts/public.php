@@ -96,7 +96,7 @@ try { document.documentElement.setAttribute('data-theme', localStorage.getItem('
 
 <script src="<?php echo base_url('assets/vendor/bootstrap/js/bootstrap.bundle.min.js'); ?>"></script>
 <script src="<?php echo base_url('assets/vendor/lucide/lucide.min.js'); ?>"></script>
-<script src="<?php echo base_url('assets/js/app.js'); ?>"></script>
+<script src="<?php echo base_url('assets/js/app.js').'?v='.filemtime(FCPATH.'assets/js/app.js'); ?>"></script>
 <script src="<?php echo base_url('assets/js/ui.js').'?v='.filemtime(FCPATH.'assets/js/ui.js'); ?>"></script>
 </body>
 </html>

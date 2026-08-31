@@ -1,5 +1,5 @@
 <h1 class="auth-title">Register Now</h1>
-<p class="auth-sub">All fields are required unless marked optional.</p>
+<p class="auth-sub">All fields are required, including the referral ID of whoever invited you.</p>
 
 <?php echo validation_errors('<div class="alert alert-danger py-2 small">', '</div>'); ?>
 
@@ -47,11 +47,12 @@
       </div>
     </div>
     <div class="col-md-6">
-      <label class="auth-label">Referral ID <span class="fw-normal">(optional)</span></label>
+      <label class="auth-label">Referral ID</label>
       <div class="auth-field">
         <i class="bi bi-people-fill"></i>
         <input type="text" name="referral_code" class="form-control text-uppercase"
-               value="<?php echo html_escape($referral_code); ?>" maxlength="16">
+               value="<?php echo html_escape($referral_code); ?>" maxlength="16"
+               placeholder="Who invited you" required>
       </div>
     </div>
     <div class="col-md-6">

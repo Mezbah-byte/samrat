@@ -1,22 +1,45 @@
 <?php
+/* Generations come from referral_levels, so the rates shown here are whatever
+ * the admin has set - never a hard-coded number. */
+$paying    = array_values(array_filter($ladder, function ($g) { return $g->status === 'active' && (float) $g->percent > 0; }));
+$direct    = 0;
+$team_size = array_sum($gen_counts);
+
+foreach ($ladder as $g)
+{
+	if ((int) $g->level === 1 && $g->status === 'active')
+	{
+		$direct = (float) $g->percent;
+	}
+}
+
 $tiles = array(
-	array('Total Referrals',   (int) $total_count,     'users',       'grad-primary', 0),
+	array('Direct Referrals',  (int) $total_count,     'users',       'grad-primary', 0),
+	array('Team Size',         (int) $team_size,       'network',     'grad-info',    0),
 	array('Commission Earned', (float) $earned_total,  'hand-coins',  'grad-success', 2),
-	array('Commission Rate',   (float) $percent,       'percent',     'grad-info',    0),
+	array('Direct Rate',       (float) $direct,        'percent',     'grad-warning', 0),
 );
 ?>
 
 <div class="page-head reveal" data-reveal-order="0">
   <div>
     <h1>Referral</h1>
-    <p class="lede">Earn <?php echo $percent; ?>% of a direct referral's deposit, paid once on approval.</p>
+    <p class="lede">
+      <?php if (count($paying) > 1): ?>
+        Earn on <?php echo count($paying); ?> generations of your team &mdash; <?php echo $direct; ?>% from
+        the people you invite directly, and more from the people they invite. Paid once, when a deposit
+        is approved.
+      <?php else: ?>
+        Earn <?php echo $direct; ?>% of a direct referral's deposit, paid once on approval.
+      <?php endif; ?>
+    </p>
   </div>
 </div>
 
 <div class="row g-3 mb-3">
   <?php foreach ($tiles as $i => $t): ?>
     <?php list($label, $value, $icon, $grad, $dp) = $t; ?>
-    <div class="col-md-4">
+    <div class="col-sm-6 col-xl-3">
       <div class="panel lift stat h-100 reveal" data-reveal-order="<?php echo $i + 1; ?>">
         <div class="stat-top">
           <div>
@@ -25,8 +48,8 @@ $tiles = array(
                  data-count="<?php echo $value; ?>"
                  data-count-decimals="<?php echo $dp; ?>"
                  data-count-prefix="<?php echo $dp ? html_escape(currency()) : ''; ?>"
-                 data-count-suffix="<?php echo $label === 'Commission Rate' ? '%' : ''; ?>">
-              <?php echo $dp ? money($value) : $value.($label === 'Commission Rate' ? '%' : ''); ?>
+                 data-count-suffix="<?php echo $label === 'Direct Rate' ? '%' : ''; ?>">
+              <?php echo $dp ? money($value) : $value.($label === 'Direct Rate' ? '%' : ''); ?>
             </div>
           </div>
           <span class="icon-tile <?php echo $grad; ?>"><i data-lucide="<?php echo $icon; ?>"></i></span>
@@ -58,9 +81,49 @@ $tiles = array(
   </div>
 </div>
 
+<div class="panel mb-3 reveal" data-reveal-order="5">
+  <div class="panel-head"><i data-lucide="network"></i> Your Generations</div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Generation</th>
+          <th>Who counts</th>
+          <th class="text-center">Rate</th>
+          <th class="text-end">People</th>
+          <th class="text-end">Earned</th>
+        </tr>
+      </thead>
+      <tbody>
+      <?php foreach ($ladder as $g): ?>
+        <?php
+        $lvl  = (int) $g->level;
+        $off  = $g->status !== 'active' || (float) $g->percent <= 0;
+        $mine = isset($earned_levels[$lvl]) ? $earned_levels[$lvl] : array('deals' => 0, 'earned' => 0);
+        ?>
+        <tr<?php echo $off ? ' class="text-muted"' : ''; ?>>
+          <td class="fw-semibold">G<?php echo $lvl; ?></td>
+          <td class="small text-muted">
+            <?php echo $lvl === 1 ? 'People who join with your ID' : 'People invited by your G'.($lvl - 1); ?>
+          </td>
+          <td class="text-center"><?php echo $off ? '&mdash;' : percent($g->percent); ?></td>
+          <td class="text-end num"><?php echo (int) (isset($gen_counts[$lvl]) ? $gen_counts[$lvl] : 0); ?></td>
+          <td class="text-end num fw-semibold <?php echo $mine['earned'] > 0 ? 'text-ok' : ''; ?>">
+            <?php echo money($mine['earned']); ?>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+  <div class="panel-foot">
+    <span class="small text-muted">Total across every generation: <?php echo rtrim(rtrim(number_format($total_pct, 2), '0'), '.'); ?>% of each approved deposit.</span>
+  </div>
+</div>
+
 <div class="row g-3">
   <div class="col-xl-6">
-    <div class="panel h-100 reveal" data-reveal-order="5">
+    <div class="panel h-100 reveal" data-reveal-order="6">
       <div class="panel-head"><i data-lucide="users"></i> My Referrals</div>
       <?php if (empty($downline)): ?>
         <div class="empty-state"><i data-lucide="user-plus"></i>No one has signed up with your ID yet.</div>
@@ -89,18 +152,19 @@ $tiles = array(
   </div>
 
   <div class="col-xl-6">
-    <div class="panel h-100 reveal" data-reveal-order="6">
+    <div class="panel h-100 reveal" data-reveal-order="7">
       <div class="panel-head"><i data-lucide="hand-coins"></i> Commission History</div>
       <?php if (empty($rows)): ?>
         <div class="empty-state"><i data-lucide="receipt"></i>No commission earned yet.</div>
       <?php else: ?>
         <div class="table-wrap">
           <table class="table">
-            <thead><tr><th>From</th><th class="text-center">Rate</th><th class="text-end">Amount</th><th>Date</th></tr></thead>
+            <thead><tr><th>From</th><th class="text-center">Gen</th><th class="text-center">Rate</th><th class="text-end">Amount</th><th>Date</th></tr></thead>
             <tbody>
             <?php foreach ($rows as $c): ?>
               <tr>
                 <td class="fw-semibold"><?php echo html_escape($c->referred_username); ?></td>
+                <td class="text-center small fw-semibold">G<?php echo (int) $c->level; ?></td>
                 <td class="text-center small"><?php echo percent($c->percent); ?></td>
                 <td class="text-end num fw-semibold text-ok">+<?php echo money($c->amount); ?></td>
                 <td class="small text-muted text-nowrap"><?php echo fmt_date($c->created_at, 'd M, H:i'); ?></td>

@@ -54,6 +54,9 @@ $route['admin/logout']          = 'admin/auth/logout';
 $route['admin/deposit-methods/(:any)/(:num)'] = 'admin/deposit_methods/$1/$2';
 $route['admin/deposit-methods/(:any)']       = 'admin/deposit_methods/$1';
 $route['admin/deposit-methods']              = 'admin/deposit_methods/index';
+$route['admin/referral-levels/(:any)/(:num)'] = 'admin/referral_levels/$1/$2';
+$route['admin/referral-levels/(:any)']       = 'admin/referral_levels/$1';
+$route['admin/referral-levels']              = 'admin/referral_levels/index';
 
 /* -----------------------------------------------------------------
  | API v1  -> application/controllers/api/V1.php

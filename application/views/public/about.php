@@ -1,10 +1,24 @@
 <?php
+/* Referral rates come from the admin's ladder, so the wording has to survive
+ * one generation, several, or none at all. */
+$ref_rates = array();
+foreach ($ref_ladder as $level => $pct)
+{
+	$ref_rates[] = 'generation '.$level.' '.((float) $pct).'%';
+}
+
+$ref_line = empty($ref_rates)
+	? 'Not running at the moment.'
+	: (count($ref_rates) === 1
+		? ((float) reset($ref_ladder)).'% of a direct referral\'s deposit, paid once when that deposit is approved.'
+		: 'Paid up the referral tree on an approved deposit &mdash; '.implode(', ', $ref_rates).'. Paid once each.');
+
 $terms = array(
 	array('Daily return',        "Set per package, credited only on days the ad quota is completed."),
 	array('Missed days',         "Forfeited. The plan term is a fixed number of calendar days and does not extend."),
 	array('Withdrawal fee',      ((float) setting('withdrawal_fee_percent', 5)).'% of the requested amount.'),
 	array('Minimum withdrawal',  "Determined by your package. Larger packages have a higher minimum."),
-	array('Referral commission', ((float) setting('referral_percent', 5)).'% of a direct referral\'s deposit, paid once when that deposit is approved.'),
+	array('Referral commission', $ref_line),
 	array('Deposits',            "Manual USDT transfer to the company wallet, verified on-chain by an administrator before the plan activates."),
 );
 ?>
@@ -40,7 +54,7 @@ $terms = array(
         </div>
       </div>
 
-      <div class="panel mb-4 reveal" data-reveal-order="3">
+      <!-- <div class="panel mb-4 reveal" data-reveal-order="3">
         <div class="panel-head text-warn"><i data-lucide="triangle-alert"></i> Risk notice</div>
         <div class="panel-body">
           <p class="mb-0 small text-muted">
@@ -49,7 +63,7 @@ $terms = array(
             legal in your jurisdiction before depositing.
           </p>
         </div>
-      </div>
+      </div> -->
 
       <div class="d-flex flex-wrap gap-3 reveal" data-reveal-order="4">
         <?php if ($mail = setting('support_email')): ?>

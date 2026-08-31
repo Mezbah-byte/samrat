@@ -80,6 +80,7 @@
 </div>
 <?php endif; ?>
 
+<?php if ($progress['required'] > 0): /* No plan, no quota - and no ad list. */ ?>
 <div class="panel reveal" data-reveal-order="3">
   <div class="panel-head">
     <i data-lucide="play-circle"></i> Available Ads
@@ -90,6 +91,13 @@
     <?php if (empty($ads)): ?>
       <div class="empty-state"><i data-lucide="tv-minimal"></i>No ads are available right now. Check back later.</div>
     <?php else: ?>
+      <?php if (count($ads) < (int) $progress['required']): ?>
+        <div class="alert alert-warning py-2 small">
+          <i data-lucide="alert-triangle"></i>
+          Only <?php echo count($ads); ?> ad<?php echo count($ads) === 1 ? '' : 's'; ?> live today, and your quota is
+          <?php echo (int) $progress['required']; ?>. Today cannot be completed until more are published &mdash; contact support.
+        </div>
+      <?php endif; ?>
       <div class="row g-3">
         <?php foreach ($ads as $ad): ?>
           <?php $done = in_array((int) $ad->id, $watched_ids, TRUE); ?>
@@ -98,14 +106,23 @@
               <div class="ad-media">
                 <?php if ($ad->media): ?>
                   <img src="<?php echo upload_url('ads', $ad->media); ?>" alt="<?php echo html_escape($ad->title); ?>">
+                <?php elseif ($ad->type === 'video' || $ad->source === 'vast'): ?>
+                  <i data-lucide="clapperboard"></i>
                 <?php else: ?>
                   <i data-lucide="tv-minimal"></i>
                 <?php endif; ?>
               </div>
               <div class="ad-body">
                 <div class="fw-semibold text-truncate mb-1" title="<?php echo html_escape($ad->title); ?>"><?php echo html_escape($ad->title); ?></div>
-                <div class="small text-muted mb-3 d-flex align-items-center gap-1">
-                  <i data-lucide="timer"></i> <?php echo (int) $ad->watch_seconds; ?>s watch time
+                <div class="small text-muted mb-3 d-flex align-items-center gap-2 flex-wrap">
+                  <span class="d-flex align-items-center gap-1">
+                    <i data-lucide="timer"></i> <?php echo (int) $ad->watch_seconds; ?>s watch time
+                  </span>
+                  <?php if ($ad->source === 'vast'): ?>
+                    <span class="chip chip-mute"><i data-lucide="clapperboard"></i> Video ad</span>
+                  <?php elseif ($ad->source === 'embed'): ?>
+                    <span class="chip chip-mute"><i data-lucide="badge-dollar-sign"></i> Sponsored</span>
+                  <?php endif; ?>
                 </div>
                 <?php if ($done): ?>
                   <button class="btn btn-ghost w-100 mt-auto" disabled><i data-lucide="check-check"></i> Watched today</button>
@@ -114,7 +131,11 @@
                           data-ad-id="<?php echo (int) $ad->id; ?>"
                           data-seconds="<?php echo (int) $ad->watch_seconds; ?>"
                           data-ad-title="<?php echo html_escape($ad->title); ?>"
-                          data-ad-media="<?php echo $ad->media ? upload_url('ads', $ad->media) : ''; ?>"
+                          data-ad-source="<?php echo html_escape($ad->source); ?>"
+                          data-ad-type="<?php echo html_escape($ad->type); ?>"
+                          data-ad-media="<?php echo $ad->media ? upload_url('ads', $ad->media) : html_escape($ad->media_url); ?>"
+                          data-ad-vast="<?php echo html_escape($ad->vast_url); ?>"
+                          data-ad-embed="<?php echo html_escape($ad->embed_code); ?>"
                           data-ad-link="<?php echo html_escape($ad->target_url); ?>"
                           data-ad-body="<?php echo html_escape($ad->body); ?>">
                     <i data-lucide="play"></i> Watch
@@ -128,8 +149,12 @@
     <?php endif; ?>
   </div>
 </div>
+<?php endif; ?>
 
-<!-- Watch modal. The countdown is a courtesy; the real gate is server-side. -->
+<!-- Watch modal. Filled by app.js: an uploaded creative, a network tag inside a
+     sandboxed iframe, or a VAST video played through Google IMA. The countdown
+     is a courtesy; the plan check and the one-view-per-day rule are enforced
+     server-side in Investment_lib::register_ad_view. -->
 <div class="modal fade" id="adModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
@@ -139,6 +164,10 @@
       </div>
       <div class="modal-body">
         <div class="ad-media-box mb-3"></div>
+        <div class="ad-stage mb-3 d-none"></div>
+        <div class="ad-stage-note small text-muted d-none">
+          <i data-lucide="wifi-off"></i> The advertiser's video did not load. The countdown still applies.
+        </div>
         <p class="ad-body-text text-muted small"></p>
         <a href="#" target="_blank" rel="noopener nofollow" class="ad-visit btn btn-ghost d-none">
           <i data-lucide="external-link"></i> Visit advertiser

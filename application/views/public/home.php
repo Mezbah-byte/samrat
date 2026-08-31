@@ -1,9 +1,11 @@
 <?php
 /* Public landing page.
  *
- * Structure follows what the established get-paid-to platforms do: hero with a
- * sign-up field in it, ways to earn, three-step explainer, payout section, FAQ,
- * repeated call to action. What they also do - review counts, total-paid
+ * Structure follows what the established get-paid-to platforms do: hero, ways
+ * to earn, what you need, a step explainer, payout section, house rules, FAQ,
+ * repeated call to action. Nothing on the page asks for input - both calls to
+ * action are a single button through to the register screen, which is the only
+ * place that collects anything. What they also do - review counts, total-paid
  * counters, press logos, testimonials - is left out on purpose, because none of
  * it can be stated truthfully here.
  *
@@ -21,10 +23,19 @@ $ways = array(
 );
 
 $steps = array(
-	array('user-plus',   'Sign up free',       'An email address and a password. Add a referral ID if somebody sent you.'),
+	array('user-plus',   'Sign up free',       'An email address, a password, and the referral ID of whoever invited you.'),
 	array('badge-check', 'Get your account on', 'Finish the setup from your dashboard and wait for it to be switched on.'),
 	array('play',        'Clear the daily set', 'Watch the ads assigned to you. A finished set marks the day done.'),
 	array('wallet',      'Cash out',            'Request a withdrawal and follow it through every stage until it lands.'),
+);
+
+$needs = array(
+	array('mail',       'accent', 'An email address',
+	      'That is the whole sign-up. No documents, no phone number, no card details.'),
+	array('smartphone', 'green',  'A phone or a laptop',
+	      'Any browser from the last few years. Nothing to download and nothing to keep updated.'),
+	array('clock',      'gold',   'A few minutes a day',
+	      'One short session clears the set. Do it whenever the day suits you.'),
 );
 
 $why = array(
@@ -34,6 +45,19 @@ $why = array(
 	array('eye',            'Status you can see',  'Every withdrawal shows where it has got to.'),
 	array('moon-star',      'Light and dark',      'Pick the theme that suits the room; it is remembered.'),
 	array('life-buoy',      'A person on the end', 'Support messages are read by someone, not a robot.'),
+);
+
+/* House rules. Behaviour only - no figures, and nothing here that the account
+ * itself does not already show the member. */
+$rules = array(
+	array('moon-star',   'A day closes at midnight',
+	      'The set resets then. Whatever was left unwatched closes with the day it belonged to.'),
+	array('refresh-cw',  'A missed day does not roll over',
+	      'It does not stack onto tomorrow and it does not extend the end of your plan. Nothing already earned is touched.'),
+	array('lock',        'A withdrawal is held while it is reviewed',
+	      'The amount leaves your balance the moment you request it, so the same balance cannot be requested twice.'),
+	array('user-check',  'One account per person',
+	      'Duplicates are closed. Referrals only count when they are a different person joining through your link.'),
 );
 
 $faqs = array(
@@ -53,7 +77,14 @@ $faqs = array(
 ?>
 
 <section class="lp-hero">
-  <span class="lp-hero-bg" aria-hidden="true"></span>
+  <?php /* Drifting wash. Decoration only, so it is hidden from assistive tech
+           and the CSS stops it under prefers-reduced-motion. */ ?>
+  <span class="lp-hero-bg" aria-hidden="true">
+    <span class="lp-orb lp-orb-1"></span>
+    <span class="lp-orb lp-orb-2"></span>
+    <span class="lp-orb lp-orb-3"></span>
+    <span class="lp-mesh"></span>
+  </span>
 
   <div class="container">
     <div class="lp-hero-grid">
@@ -67,15 +98,13 @@ $faqs = array(
           banked. Withdraw whenever you are ready.
         </p>
 
-        <?php /* Hands the address to the full form so nobody types it twice. */ ?>
-        <form class="lp-form" method="get" action="<?php echo base_url('register'); ?>">
-          <label class="visually-hidden" for="lpEmail">Email address</label>
-          <input type="email" id="lpEmail" name="email" placeholder="you@example.com"
-                 autocomplete="email" inputmode="email" required>
-          <button type="submit" class="lp-btn lp-btn-primary">
+        <?php /* One button. Asking for an email here only duplicated the field
+                 the register screen already has. */ ?>
+        <div class="lp-actions">
+          <a class="lp-btn lp-btn-primary lp-btn-lg" href="<?php echo base_url('register'); ?>">
             Start earning <i data-lucide="arrow-right"></i>
-          </button>
-        </form>
+          </a>
+        </div>
 
         <p class="lp-form-note">
           Free to join. Already a member? <a href="<?php echo base_url('login'); ?>">Sign in</a>.
@@ -154,6 +183,27 @@ $faqs = array(
 <section class="lp-section">
   <div class="container">
     <header class="lp-head center reveal" data-reveal-order="0">
+      <span class="lp-eyebrow plain">What you need</span>
+      <h2>Three things, and you have all of them</h2>
+      <p>No fee to join, no equipment to buy, no approval queue to sit in before you can look around.</p>
+    </header>
+
+    <div class="lp-ways">
+      <?php foreach ($needs as $i => $n): ?>
+        <?php list($icon, $tone, $title, $text) = $n; ?>
+        <article class="lp-way tone-<?php echo $tone; ?> reveal" data-reveal-order="<?php echo $i + 1; ?>">
+          <span class="lp-way-icon"><i data-lucide="<?php echo $icon; ?>"></i></span>
+          <h3><?php echo $title; ?></h3>
+          <p><?php echo $text; ?></p>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+
+<section class="lp-section lp-section-alt">
+  <div class="container">
+    <header class="lp-head center reveal" data-reveal-order="0">
       <span class="lp-eyebrow plain">Ways to earn</span>
       <h2>Three ways the balance moves</h2>
       <p>All of them run from the same dashboard. No extra apps, no separate accounts.</p>
@@ -173,7 +223,7 @@ $faqs = array(
   </div>
 </section>
 
-<section class="lp-section lp-section-alt">
+<section class="lp-section">
   <div class="container">
     <header class="lp-head center reveal" data-reveal-order="0">
       <span class="lp-eyebrow plain">How it works</span>
@@ -197,7 +247,7 @@ $faqs = array(
   </div>
 </section>
 
-<section class="lp-section">
+<section class="lp-section lp-section-alt">
   <div class="container">
     <div class="lp-split">
       <div class="lp-split-copy reveal" data-reveal-order="0">
@@ -250,7 +300,7 @@ $faqs = array(
   </div>
 </section>
 
-<section class="lp-section lp-section-alt">
+<section class="lp-section">
   <div class="container">
     <header class="lp-head center reveal" data-reveal-order="0">
       <span class="lp-eyebrow plain">Why here</span>
@@ -261,6 +311,29 @@ $faqs = array(
     <div class="lp-why">
       <?php foreach ($why as $i => $w): ?>
         <?php list($icon, $title, $text) = $w; ?>
+        <div class="lp-why-item reveal" data-reveal-order="<?php echo $i + 1; ?>">
+          <span class="lp-why-icon"><i data-lucide="<?php echo $icon; ?>"></i></span>
+          <div>
+            <h3><?php echo $title; ?></h3>
+            <p><?php echo $text; ?></p>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+
+<section class="lp-section lp-section-alt">
+  <div class="container">
+    <header class="lp-head center reveal" data-reveal-order="0">
+      <span class="lp-eyebrow plain">Good to know</span>
+      <h2>The rules, before you sign up rather than after</h2>
+      <p>Four things that catch people out. None of them change once you are in.</p>
+    </header>
+
+    <div class="lp-why lp-rules">
+      <?php foreach ($rules as $i => $r): ?>
+        <?php list($icon, $title, $text) = $r; ?>
         <div class="lp-why-item reveal" data-reveal-order="<?php echo $i + 1; ?>">
           <span class="lp-why-icon"><i data-lucide="<?php echo $icon; ?>"></i></span>
           <div>
@@ -305,14 +378,11 @@ $faqs = array(
         <h2>Today's set is waiting</h2>
         <p>Create an account, get set up, and start clearing your daily ads.</p>
 
-        <form class="lp-form" method="get" action="<?php echo base_url('register'); ?>">
-          <label class="visually-hidden" for="ctaEmail">Email address</label>
-          <input type="email" id="ctaEmail" name="email" placeholder="you@example.com"
-                 autocomplete="email" inputmode="email" required>
-          <button type="submit" class="lp-btn lp-btn-light">
+        <div class="lp-actions">
+          <a class="lp-btn lp-btn-light lp-btn-lg" href="<?php echo base_url('register'); ?>">
             Start earning <i data-lucide="arrow-right"></i>
-          </button>
-        </form>
+          </a>
+        </div>
 
         <p class="lp-form-note">Free to join. Already a member? <a href="<?php echo base_url('login'); ?>">Sign in</a>.</p>
       </div>

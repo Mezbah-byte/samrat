@@ -34,9 +34,12 @@ class Home extends Public_Controller {
 
 	public function about()
 	{
+		$this->load->model('referral_level_model');
+
 		$this->render('public/about', array(
-			'page_title'  => 'About',
-			'active_menu' => 'about',
+			'page_title'   => 'About',
+			'active_menu'  => 'about',
+			'ref_ladder'   => $this->referral_level_model->active_map(),
 		));
 	}
 

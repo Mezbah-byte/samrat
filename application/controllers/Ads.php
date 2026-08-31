@@ -16,9 +16,13 @@ class Ads extends User_Controller {
 		$progress = $this->investment_lib->today_progress($this->user->id);
 		$required = $progress['required'];
 
-		// Only surface as many ads as the highest active plan requires, plus a
-		// small buffer so a user is not blocked when one ad is already watched.
-		$ads     = $this->ad_model->daily_task_ads($required > 0 ? $required + 5 : 10);
+		// No active plan means no quota, and register_ad_view would reject every
+		// view anyway - so there is nothing to offer. Listing ads here only ever
+		// invited people to watch them for nothing.
+		$ads = $required > 0
+			? $this->ad_model->daily_task_ads($required + 5)
+			: array();
+
 		$watched = $this->ad_model->watched_ids($this->user->id);
 
 		$this->render('user/ads', array(

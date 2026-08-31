@@ -30,8 +30,25 @@
                 <img src="<?php echo upload_url('ads', $a->media); ?>" style="width:52px;height:36px;object-fit:cover" class="rounded" alt="">
               <?php else: ?><i class="bi bi-image text-muted"></i><?php endif; ?>
             </td>
-            <td class="fw-semibold small"><?php echo html_escape($a->title); ?></td>
-            <td><span class="badge text-bg-light border"><?php echo html_escape($a->type); ?></span></td>
+            <td class="fw-semibold small">
+              <?php echo html_escape($a->title); ?>
+              <?php
+              /* Ad_model refuses to serve a row with nothing to show, so flag it
+                 here rather than leaving the admin wondering where it went. */
+              $no_creative = ($a->source === 'vast'  && ! $a->vast_url)
+                  || ($a->source === 'embed' && ! $a->embed_code)
+                  || ($a->source === 'upload' && ! $a->media && ! $a->media_url && ! $a->body);
+              ?>
+              <?php if ($no_creative): ?>
+                <div><span class="badge text-bg-danger-subtle border text-danger">no creative &mdash; never shown</span></div>
+              <?php endif; ?>
+            </td>
+            <td>
+              <span class="badge text-bg-light border"><?php echo html_escape($a->type); ?></span>
+              <?php if ($a->source !== 'upload'): ?>
+                <span class="badge text-bg-primary-subtle border ms-1"><?php echo $a->source === 'vast' ? 'VAST' : 'network'; ?></span>
+              <?php endif; ?>
+            </td>
             <td class="small"><?php echo $a->placement === 'daily_task' ? 'Daily task' : 'Global'; ?></td>
             <td class="text-center small"><?php echo (int) $a->watch_seconds; ?>s</td>
             <td class="text-end"><?php echo number_format($a->total_views); ?></td>

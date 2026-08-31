@@ -7,14 +7,58 @@ class Ad_model extends MY_Model {
 	protected $order_by  = 'sort_order';
 	protected $order_dir = 'ASC';
 
-	/** Ads currently inside their schedule window. */
+	/**
+	 * Ads currently inside their schedule window that actually have something
+	 * to show.
+	 *
+	 * The creative check is not cosmetic: a row with no image, no file, no
+	 * network tag and no body text renders as an empty box, and the user still
+	 * has to sit through the countdown to clear a quota slot. Those rows stay
+	 * out of every list rather than wasting a slot.
+	 */
 	private function live($placement)
 	{
 		$today = date('Y-m-d');
-		return $this->db->where('status', 'active')->where('placement', $placement)
+
+		$this->db->where('status', 'active')->where('placement', $placement)
 			->group_start()->where('starts_at <=', $today)->or_where('starts_at', NULL)->group_end()
 			->group_start()->where('ends_at >=', $today)->or_where('ends_at', NULL)->group_end()
+			->group_start()
+				->group_start()
+					->where('source', 'vast')->where('vast_url IS NOT NULL')->where("vast_url <>", '')
+				->group_end()
+				->or_group_start()
+					->where('source', 'embed')->where('embed_code IS NOT NULL')->where("embed_code <>", '')
+				->group_end()
+				->or_group_start()
+					->where('source', 'upload')
+					->group_start()
+						->where('media IS NOT NULL')
+						->or_group_start()->where('media_url IS NOT NULL')->where("media_url <>", '')->group_end()
+						->or_group_start()->where('body IS NOT NULL')->where("body <>", '')->group_end()
+					->group_end()
+				->group_end()
+			->group_end()
 			->order_by('sort_order', 'ASC')->order_by('id', 'ASC');
+
+		return $this->db;
+	}
+
+	/** Rows an admin has created but that can never be served - for warnings. */
+	public function creativeless_count()
+	{
+		// The outer brackets matter: CodeIgniter drops a raw condition in as-is,
+		// so without them the ORs would escape the status check and every
+		// creativeless row would count, active or not.
+		$raw = "((source = 'vast'  AND (vast_url IS NULL   OR vast_url = ''))"
+			." OR (source = 'embed' AND (embed_code IS NULL OR embed_code = ''))"
+			." OR (source = 'upload' AND media IS NULL"
+			."     AND (media_url IS NULL OR media_url = '')"
+			."     AND (body IS NULL OR body = '')))";
+
+		return (int) $this->db->where('status', 'active')
+			->where($raw, NULL, FALSE)
+			->count_all_results($this->table);
 	}
 
 	public function global_ads($limit = 5)

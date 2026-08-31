@@ -5,9 +5,37 @@ class Referral_model extends MY_Model {
 
 	protected $table = 'referral_commissions';
 
-	public function paid_for_deposit($deposit_id)
+	/**
+	 * Has this deposit already paid out? With generations there is one row per
+	 * level, so pass a level to ask about that generation alone. The unique
+	 * index on (deposit_id, level) is the real guard - this is the cheap check.
+	 */
+	public function paid_for_deposit($deposit_id, $level = NULL)
 	{
-		return (int) $this->db->where('deposit_id', (int) $deposit_id)->count_all_results($this->table) > 0;
+		$this->db->where('deposit_id', (int) $deposit_id);
+
+		if ($level !== NULL)
+		{
+			$this->db->where('level', (int) $level);
+		}
+
+		return (int) $this->db->count_all_results($this->table) > 0;
+	}
+
+	/** Commission this user earned, split by the generation it came from. */
+	public function earned_by_level($user_id)
+	{
+		$rows = $this->db->select('level, COUNT(*) AS deals, SUM(amount) AS earned', FALSE)
+			->where('referrer_id', (int) $user_id)
+			->group_by('level')->order_by('level', 'ASC')->get($this->table)->result();
+
+		$out = array();
+		foreach ($rows as $r)
+		{
+			$out[(int) $r->level] = array('deals' => (int) $r->deals, 'earned' => (float) $r->earned);
+		}
+
+		return $out;
 	}
 
 	public function for_referrer($user_id, $limit, $offset = 0)
@@ -30,9 +58,9 @@ class Referral_model extends MY_Model {
 		return (float) ($row->total ?: 0);
 	}
 
-	public function paginate_admin($limit, $offset, $search = '')
+	public function paginate_admin($limit, $offset, $search = '', $level = 0)
 	{
-		$build = function () use ($search) {
+		$build = function () use ($search, $level) {
 			$this->db->from('referral_commissions c')
 				->join('users r', 'r.id = c.referrer_id', 'left')
 				->join('users d', 'd.id = c.referred_id', 'left');
@@ -42,6 +70,10 @@ class Referral_model extends MY_Model {
 					->like('r.username', $search)
 					->or_like('d.username', $search)
 				->group_end();
+			}
+			if ($level > 0)
+			{
+				$this->db->where('c.level', (int) $level);
 			}
 		};
 
@@ -53,6 +85,21 @@ class Referral_model extends MY_Model {
 			->order_by('c.id', 'DESC')->limit($limit, $offset)->get()->result();
 
 		return array('rows' => $rows, 'total' => $total);
+	}
+
+	/** Paid-out totals per generation, for the admin screen. */
+	public function totals_by_level()
+	{
+		$rows = $this->db->select('level, COUNT(*) AS deals, SUM(amount) AS paid', FALSE)
+			->group_by('level')->order_by('level', 'ASC')->get($this->table)->result();
+
+		$out = array();
+		foreach ($rows as $r)
+		{
+			$out[(int) $r->level] = array('deals' => (int) $r->deals, 'paid' => (float) $r->paid);
+		}
+
+		return $out;
 	}
 
 	/** Top referrers by total commission, for the admin dashboard. */

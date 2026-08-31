@@ -36,7 +36,7 @@
               <td class="text-center"><span class="chip chip-mute"><?php echo (int) $p->daily_ads; ?>/day</span></td>
               <td class="text-end num"><?php echo money($p->min_withdraw); ?></td>
               <td class="text-end num"><?php echo money($profit); ?></td>
-              <td class="text-end num fw-bold"><?php echo money((float) $p->price + $profit); ?></td>
+              <td class="text-end num fw-bold"><?php echo money((float) $p->price); ?></td>
             </tr>
           <?php endforeach; ?>
           </tbody>

@@ -4,7 +4,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Settings extends Admin_Controller {
 
 	/** Keys that must never be blanked or set to nonsense. */
-	protected $numeric_keys = array('withdrawal_fee_percent', 'referral_percent');
+	protected $numeric_keys = array('withdrawal_fee_percent');
 
 	public function index($group = 'general')
 	{

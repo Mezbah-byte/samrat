@@ -3,8 +3,9 @@
 CodeIgniter 3 application covering the **public site, user panel, admin panel and a minimal JSON API in one project**.
 
 Users buy a package (fixed USDT deposit), earn a daily percentage for the plan's term as long as they complete
-that day's advertisement quota, earn a one-time commission on direct referrals, and withdraw subject to a
-package-based minimum and a percentage fee. Every one of those numbers is editable from the admin panel.
+that day's advertisement quota, earn a one-time commission on several generations of their referral tree, and
+withdraw subject to a package-based minimum and a percentage fee. Every one of those numbers is editable from the
+admin panel.
 
 ---
 
@@ -78,11 +79,23 @@ The app ships with 9 packages seeded but is not ready for real users until you d
    addresses and upload their QR codes. **Users cannot deposit until this is done**, and a wrong address here
    sends every deposit to the wrong place.
 2. **Ads** — create at least as many active `daily_task` ads as your largest package's daily requirement.
-   Without ads, nobody can unlock their daily profit.
+   Without ads, nobody can unlock their daily profit. Each ad picks a **creative source**:
+
+   | Source | What it is | When the quota clears |
+   |---|---|---|
+   | `upload` | your own image, or a video file / URL | countdown ends (a video must also finish) |
+   | `embed` | an ad network's HTML/JS tag — Adsterra, PropellerAds, AdSense, Monetag… rendered in a sandboxed iframe | countdown ends |
+   | `vast` | a VAST/VPAID tag played through Google IMA | the network's video reports `COMPLETE` |
+
+   The installer ships one **inactive** sample VAST ad using Google's public IMA test tag — switch it on to prove
+   the video path works, then replace the tag with your network's. `vast` ads need internet access: the IMA SDK is
+   loaded from `imasdk.googleapis.com` on demand, and degrades to the countdown if it cannot load.
 3. **Settings → General** — company name, logo, support email/Telegram.
-4. **Settings → Finance** — withdrawal fee % and referral commission % (both default to 5).
-5. **Packages** — packages 6–9 ship inactive as spare slots. Edit and activate the ones you want.
-6. **Cron** — schedule the daily job (below).
+4. **Settings → Finance** — withdrawal fee % (defaults to 5).
+5. **Referral Levels** — the generation ladder. Ships as G1 5%, G2 2%, G3 1%, all paying. Add, edit or switch off
+   generations here; this screen is the only place referral rates live.
+6. **Packages** — packages 6–9 ship inactive as spare slots. Edit and activate the ones you want.
+7. **Cron** — schedule the daily job (below).
 
 ---
 
@@ -124,8 +137,16 @@ schtasks /create /tn "SamratDailyCron" /tr "C:\xampp\php\php.exe C:\xampp\htdocs
 **Deposit → active plan.** The user picks a package, sends USDT to the configured company wallet, and submits the
 transaction hash. Nothing is credited yet. An admin verifies the hash on the block explorer (the deposit screen
 links straight to Tronscan / BscScan / Etherscan) and approves. Approval runs as **one database transaction**:
-the deposit is credited, the package cost is debited, the investment opens, day 1 is created, and the referrer is
-paid. If any step fails, none of it happens.
+the deposit is credited, the package cost is debited, the investment opens, day 1 is created, and the referral
+tree is paid. If any step fails, none of it happens.
+
+**Referral commission is paid by generation.** On approval the commission walks up the tree from the depositor:
+their referrer is generation 1, that person's referrer generation 2, and so on for as many rows as
+`referral_levels` holds. Each generation earns its own percentage of the **deposit amount**, once. The ladder is
+edited under *Admin → Referral Levels*, along with two rules: whether a non-active account still earns, and
+whether an upline must hold an active plan to earn. Switching a generation off does not cut the walk short — the
+generations above it still earn. A unique index on `referral_commissions(deposit_id, level)` means a re-approval
+can never pay the same generation twice.
 
 **Ads unlock the daily profit.** Each day the user must watch `daily_ads` ads. Once the quota is met, that day's
 `daily_amount` is credited. One view counts toward every active plan the user holds, so a user with two plans

@@ -7,7 +7,7 @@
 <link rel="icon" href="<?php echo logo_url(); ?>">
 <link rel="stylesheet" href="<?php echo base_url('assets/vendor/bootstrap/css/bootstrap.min.css'); ?>">
 <link rel="stylesheet" href="<?php echo base_url('assets/vendor/bootstrap-icons/font/bootstrap-icons.min.css'); ?>">
-<link rel="stylesheet" href="<?php echo base_url('assets/css/app.css'); ?>">
+<link rel="stylesheet" href="<?php echo base_url('assets/css/app.css').'?v='.filemtime(FCPATH.'assets/css/app.css'); ?>">
 <link rel="stylesheet" href="<?php echo base_url('assets/css/auth.css').'?v='.filemtime(FCPATH.'assets/css/auth.css'); ?>">
 </head>
 <body class="auth-lamp" data-on="false">
@@ -51,7 +51,7 @@
 <script src="<?php echo base_url('assets/vendor/bootstrap/js/bootstrap.bundle.min.js'); ?>"></script>
 <script src="<?php echo base_url('assets/vendor/gsap/gsap.min.js'); ?>"></script>
 <script src="<?php echo base_url('assets/vendor/gsap/Draggable.min.js'); ?>"></script>
-<script src="<?php echo base_url('assets/js/app.js'); ?>"></script>
+<script src="<?php echo base_url('assets/js/app.js').'?v='.filemtime(FCPATH.'assets/js/app.js'); ?>"></script>
 <script src="<?php echo base_url('assets/js/auth-lamp.js').'?v='.filemtime(FCPATH.'assets/js/auth-lamp.js'); ?>"></script>
 </body>
 </html>

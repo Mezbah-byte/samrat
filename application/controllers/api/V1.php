@@ -431,14 +431,23 @@ class V1 extends API_Controller {
 		$progress = $this->investment_lib->today_progress($this->api_user->id);
 		$watched  = $this->ad_model->watched_ids($this->api_user->id);
 
+		// No active plan means no quota, and ads_watch would reject every view -
+		// so the list stays empty rather than inviting views that pay nothing.
+		$live = $progress['required'] > 0
+			? $this->ad_model->daily_task_ads($progress['required'] + 5)
+			: array();
+
 		$rows = array();
-		foreach ($this->ad_model->daily_task_ads($progress['required'] > 0 ? $progress['required'] + 5 : 10) as $ad)
+		foreach ($live as $ad)
 		{
 			$rows[] = array(
 				'id'            => (int) $ad->id,
 				'title'         => $ad->title,
 				'type'          => $ad->type,
-				'media'         => $ad->media ? upload_url('ads', $ad->media) : NULL,
+				'source'        => $ad->source,
+				'media'         => $ad->media ? upload_url('ads', $ad->media) : ($ad->media_url ?: NULL),
+				'vast_url'      => $ad->source === 'vast' ? $ad->vast_url : NULL,
+				'embed_code'    => $ad->source === 'embed' ? $ad->embed_code : NULL,
 				'target_url'    => $ad->target_url,
 				'body'          => $ad->body,
 				'watch_seconds' => (int) $ad->watch_seconds,
@@ -477,7 +486,24 @@ class V1 extends API_Controller {
 	{
 		if ( ! $this->require_auth()) return;
 
-		$this->load->model('referral_model');
+		$this->load->model(array('referral_model', 'referral_level_model'));
+
+		$ladder        = $this->referral_level_model->ladder();
+		$earned_levels = $this->referral_model->earned_by_level($this->api_user->id);
+		$gen_counts    = $this->user_model->generation_counts($this->api_user->id, $this->referral_level_model->max_level());
+
+		$generations = array();
+		foreach ($ladder as $g)
+		{
+			$lvl = (int) $g->level;
+			$generations[] = array(
+				'level'   => $lvl,
+				'percent' => (float) $g->percent,
+				'active'  => $g->status === 'active',
+				'people'  => isset($gen_counts[$lvl]) ? $gen_counts[$lvl] : 0,
+				'earned'  => isset($earned_levels[$lvl]) ? $earned_levels[$lvl]['earned'] : 0.0,
+			);
+		}
 
 		$downline = array();
 		foreach ($this->user_model->direct_referrals($this->api_user->id, 100) as $r)
@@ -495,7 +521,11 @@ class V1 extends API_Controller {
 		$this->ok(array(
 			'referral_code' => $this->api_user->referral_code,
 			'referral_link' => base_url('register/'.$this->api_user->referral_code),
-			'percent'       => (float) $this->setting_model->get('referral_percent', 5),
+			// `percent` is generation 1, kept for clients written before the
+			// ladder existed; `generations` is the full picture.
+			'percent'       => isset($generations[0]) ? $generations[0]['percent'] : 0.0,
+			'generations'   => $generations,
+			'team_size'     => array_sum($gen_counts),
 			'total_count'   => count($downline),
 			'earned_total'  => $this->referral_model->earned_total($this->api_user->id),
 			'downline'      => $downline,

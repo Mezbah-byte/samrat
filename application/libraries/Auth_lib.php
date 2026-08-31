@@ -28,17 +28,33 @@ class Auth_lib {
 	 |================================================================= */
 
 	/**
+	 * Every account must join under an existing one: the referral ID is
+	 * required and has to resolve to an active user. The single exception is the
+	 * very first account on a fresh install, when there is nobody to join under
+	 * - otherwise nobody could ever sign up.
+	 *
+	 * This is the one gate both the web form and the API go through, so the rule
+	 * cannot be skipped by posting straight at /api/v1/register.
+	 *
 	 * @param array $input full_name, username, email, mobile, country,
-	 *                     password, referral_code (optional)
+	 *                     password, referral_code
 	 * @return array{ok:bool,message:string,user_id:?int}
 	 */
 	public function register($input)
 	{
 		$referrer_id = NULL;
+		$code        = isset($input['referral_code']) ? strtoupper(trim($input['referral_code'])) : '';
 
-		if ( ! empty($input['referral_code']))
+		if ($code === '')
 		{
-			$referrer = $this->CI->user_model->by_referral_code(strtoupper(trim($input['referral_code'])));
+			if ($this->CI->user_model->count_by() > 0)
+			{
+				return array('ok' => FALSE, 'message' => 'A referral ID is required to sign up.', 'user_id' => NULL);
+			}
+		}
+		else
+		{
+			$referrer = $this->CI->user_model->by_referral_code($code);
 			if ( ! $referrer)
 			{
 				return array('ok' => FALSE, 'message' => 'That referral ID does not exist.', 'user_id' => NULL);

@@ -1011,6 +1011,42 @@ body.ui .list-group-item {
     border-radius: var(--r-md);
 }
 
+/* Video and network-tag stage. 16:9 box so the frame does not jump around
+   while a third-party creative loads at whatever size it likes. */
+#adModal .ad-video-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: var(--r-md);
+    overflow: hidden;
+}
+
+#adModal .ad-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+}
+
+/* IMA draws its own creative and click overlay into this layer, above the
+   video element it is controlling. */
+#adModal .ad-ima {
+    position: absolute;
+    inset: 0;
+}
+
+#adModal .ad-frame {
+    display: block;
+    width: 100%;
+    min-height: 320px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: #0b0e14;
+}
+
 #adModal .bg-light {
     background: var(--panel-2) !important;
     color: var(--txt-muted) !important;

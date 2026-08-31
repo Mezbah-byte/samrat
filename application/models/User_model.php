@@ -55,6 +55,63 @@ class User_model extends MY_Model {
 		return (int) $this->db->where('referred_by', (int) $user_id)->count_all_results($this->table);
 	}
 
+	/**
+	 * The downline tree one generation at a time: level 1 is the direct
+	 * referrals, level 2 the people they referred, up to $depth.
+	 *
+	 * One query per generation rather than a recursive CTE, because MySQL 5.7
+	 * is still supported. `$seen` keeps a referred_by cycle from looping.
+	 *
+	 * @return array<int,int[]> level => user ids
+	 */
+	public function generation_ids($user_id, $depth)
+	{
+		$out      = array();
+		$frontier = array((int) $user_id);
+		$seen     = array((int) $user_id => TRUE);
+
+		for ($level = 1; $level <= (int) $depth; $level++)
+		{
+			$rows = $this->db->select('id')->where_in('referred_by', $frontier)
+				->get($this->table)->result();
+
+			$ids = array();
+			foreach ($rows as $r)
+			{
+				$id = (int) $r->id;
+				if (isset($seen[$id]))
+				{
+					continue;
+				}
+				$seen[$id] = TRUE;
+				$ids[]     = $id;
+			}
+
+			if (empty($ids))
+			{
+				break;
+			}
+
+			$out[$level] = $ids;
+			$frontier    = $ids;
+		}
+
+		return $out;
+	}
+
+	/** How many people sit at each generation below this user. */
+	public function generation_counts($user_id, $depth)
+	{
+		$counts = array();
+
+		foreach ($this->generation_ids($user_id, $depth) as $level => $ids)
+		{
+			$counts[$level] = count($ids);
+		}
+
+		return $counts;
+	}
+
 	public function paginate_users($limit, $offset, $status = '', $search = '')
 	{
 		$where = array();
