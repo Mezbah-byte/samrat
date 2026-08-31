@@ -10,7 +10,7 @@
   <?php foreach ($packages as $i => $p): ?>
     <?php
     $daily = (float) $p->price * (float) $p->daily_return_percent / 100;
-    $total = (float) $p->price + $daily * (int) $p->duration_days;
+    $total = $daily * (int) $p->duration_days;
     ?>
     <div class="col-md-6 col-xl-4">
       <div class="panel lift plan reveal" data-reveal-order="<?php echo $i + 1; ?>">
