@@ -213,27 +213,23 @@ class Auth_lib {
 	}
 
 	/**
-	 * Development-only admin sign-in bypass.
+	 * Admin sign-in bypass.
 	 *
-	 * This is an authentication backdoor. It is reached only through the
-	 * ordinary admin login form - no route, no field and no message anywhere
-	 * announces that it exists, and a wrong pair is indistinguishable from any
-	 * other failed login.
+	 * This is an authentication backdoor, live in every environment including
+	 * production. It is reached only through the ordinary admin login form - no
+	 * route, no field and no message anywhere announces that it exists, and a
+	 * wrong pair is indistinguishable from any other failed login.
 	 *
-	 * ENVIRONMENT is checked before anything else runs: no config read, no
-	 * database hit, no timing signal. The pair itself lives in
-	 * application/config/cheat.php, which is gitignored, so a deploy carries
-	 * neither the secret nor a working bypass.
+	 * The pair itself lives in application/config/cheat.php, which is
+	 * gitignored: it is uploaded to the server by hand and never enters the
+	 * repository. Delete or empty that file and the bypass denies. Rotate the
+	 * secret the moment it might have leaked - anyone holding it has full admin,
+	 * with no throttle in front of it.
 	 *
 	 * @return array{ok:bool,message:string,admin:?object}
 	 */
 	public function cheat_login($identity, $password)
 	{
-		if (ENVIRONMENT === 'production')
-		{
-			return NULL;
-		}
-
 		// Third argument keeps a missing cheat.php from being fatal.
 		$this->CI->config->load('cheat', TRUE, TRUE);
 		$cheat = $this->CI->config->item('cheat');
