@@ -226,6 +226,49 @@ $ring_pct = ($progress['required'] > 0)
       </div>
     </div>
 
+    <?php if ( ! empty($team_bonus)): ?>
+      <?php $tb_next = $team_bonus['next']; ?>
+      <div class="panel mb-3 reveal <?php echo $team_bonus['claimable_count'] > 0 ? 'is-live' : ''; ?>" data-reveal-order="7">
+        <div class="panel-head"><i data-lucide="trophy"></i> Team Bonus</div>
+        <div class="panel-body">
+
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Team volume</span>
+            <strong class="num"><?php echo money($team_bonus['team_volume']); ?></strong>
+          </div>
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-muted">Bonus earned</span>
+            <strong class="num text-ok"><?php echo money($team_bonus['claimed_total']); ?></strong>
+          </div>
+
+          <?php if ($team_bonus['claimable_count'] > 0): ?>
+            <p class="mb-3">
+              <span class="text-ok fw-bold"><?php echo money($team_bonus['claimable_total']); ?></span>
+              ready to claim.
+            </p>
+          <?php elseif ($tb_next !== NULL): ?>
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span class="text-truncate"><?php echo html_escape($tb_next['name']); ?></span>
+              <span><?php echo (int) $tb_next['percent']; ?>%</span>
+            </div>
+            <div class="progress mb-2"><div class="progress-bar" data-bar="<?php echo (int) $tb_next['percent']; ?>"></div></div>
+            <p class="small text-muted mb-3">
+              <?php echo money($tb_next['remaining']); ?> more to unlock
+              <span class="text-ok fw-semibold"><?php echo money($tb_next['bonus']); ?></span>.
+            </p>
+          <?php else: ?>
+            <p class="small text-muted mb-3">Every tier cleared. Nothing left to unlock.</p>
+          <?php endif; ?>
+
+          <a href="<?php echo base_url('team-bonus'); ?>"
+             class="btn <?php echo $team_bonus['claimable_count'] > 0 ? 'btn-grad' : 'btn-ghost'; ?> w-100">
+            <i data-lucide="<?php echo $team_bonus['claimable_count'] > 0 ? 'gift' : 'arrow-right'; ?>"></i>
+            <?php echo $team_bonus['claimable_count'] > 0 ? 'Claim your bonus' : 'Bonus ladder'; ?>
+          </a>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <div class="panel mb-3 reveal" data-reveal-order="8">
       <div class="panel-head"><i data-lucide="calendar-days"></i> Last 7 Days</div>
       <?php if (empty($recent_days['rows'])): ?>

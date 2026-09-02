@@ -36,6 +36,7 @@
     <a class="nav-link <?php echo active_if($active_menu, 'transactions'); ?>" href="<?php echo base_url('admin/transactions'); ?>"><i class="bi bi-list-columns-reverse"></i> Transactions</a>
     <a class="nav-link <?php echo active_if($active_menu, 'referrals'); ?>" href="<?php echo base_url('admin/referrals'); ?>"><i class="bi bi-diagram-3"></i> Referrals</a>
     <a class="nav-link <?php echo active_if($active_menu, 'referral_levels'); ?>" href="<?php echo base_url('admin/referral-levels'); ?>"><i class="bi bi-bar-chart-steps"></i> Referral Levels</a>
+    <a class="nav-link <?php echo active_if($active_menu, 'team_bonus'); ?>" href="<?php echo base_url('admin/team-bonus'); ?>"><i class="bi bi-trophy"></i> Team Bonus</a>
   </nav>
 
   <div class="nav-section">Manage</div>

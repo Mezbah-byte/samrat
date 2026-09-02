@@ -10,6 +10,7 @@ $nav = array(
 		array('withdraw',      'withdraw',      'banknote',         'Withdraw'),
 		array('transactions',  'transactions',  'receipt-text',     'Transactions'),
 		array('referral',      'referral',      'users',            'Referral'),
+		array('team_bonus',    'team-bonus',    'trophy',           'Team Bonus', ! empty($team_bonus_claimable) ? (int) $team_bonus_claimable : 0, 'alert'),
 	),
 	'Account' => array(
 		array('profile',       'profile',       'user-cog',         'Profile'),
@@ -26,6 +27,13 @@ if (setting('agent_panel_enabled', '1') !== '1')
 {
 	$nav['Account'] = array_values(array_filter($nav['Account'], function ($l) {
 		return $l[0] !== 'agentship';
+	}));
+}
+
+if (setting('team_bonus_enabled', '1') !== '1')
+{
+	$nav['Money'] = array_values(array_filter($nav['Money'], function ($l) {
+		return $l[0] !== 'team_bonus';
 	}));
 }
 ?>

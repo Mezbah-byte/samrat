@@ -38,6 +38,8 @@ $route['ads/complete/(:num)']   = 'ads/complete/$1';
 $route['withdraw']              = 'withdraw/index';
 $route['withdraw/history']      = 'withdraw/history';
 $route['referral']              = 'referral/index';
+$route['team-bonus']            = 'team_bonus/index';
+$route['team-bonus/claim/(:num)'] = 'team_bonus/claim/$1';
 $route['profile']               = 'profile/index';
 $route['profile/password']      = 'profile/password';
 $route['profile/avatar']        = 'profile/avatar';
@@ -69,6 +71,9 @@ $route['admin/deposit-methods']              = 'admin/deposit_methods/index';
 $route['admin/referral-levels/(:any)/(:num)'] = 'admin/referral_levels/$1/$2';
 $route['admin/referral-levels/(:any)']       = 'admin/referral_levels/$1';
 $route['admin/referral-levels']              = 'admin/referral_levels/index';
+$route['admin/team-bonus/(:any)/(:num)']     = 'admin/team_bonus/$1/$2';
+$route['admin/team-bonus/(:any)']            = 'admin/team_bonus/$1';
+$route['admin/team-bonus']                   = 'admin/team_bonus/index';
 $route['admin/agent-applications/(:any)/(:num)/(:any)'] = 'admin/agent_applications/$1/$2/$3';
 $route['admin/agent-applications/(:any)/(:num)']        = 'admin/agent_applications/$1/$2';
 $route['admin/agent-applications/(:any)']               = 'admin/agent_applications/$1';
@@ -79,6 +84,7 @@ $route['admin/agent-applications']                      = 'admin/agent_applicati
  | ----------------------------------------------------------------- */
 $route['api/v1/ads/watch']       = 'api/v1/ads_watch';
 $route['api/v1/deposit/methods'] = 'api/v1/deposit_methods';
+$route['api/v1/team-bonus']      = 'api/v1/team_bonus';
 $route['api/v1/(:any)/(:num)']   = 'api/v1/$1/$2';
 $route['api/v1/(:any)']          = 'api/v1/$1';
 

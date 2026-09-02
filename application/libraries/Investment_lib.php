@@ -26,7 +26,7 @@ class Investment_lib {
 			'daily_earning_model', 'referral_model', 'referral_level_model',
 			'ad_model', 'notification_model', 'setting_model',
 		));
-		$this->CI->load->library(array('wallet_lib', 'agent_lib'));
+		$this->CI->load->library(array('wallet_lib', 'agent_lib', 'team_bonus_lib'));
 	}
 
 	/* =================================================================
@@ -99,6 +99,10 @@ class Investment_lib {
 		);
 
 		$this->pay_referral_commission($deposit);
+
+		// The same purchase also moves the direct referrer's team volume
+		// forward, which may unlock a milestone bonus for them to claim.
+		$this->CI->team_bonus_lib->record_deposit($deposit);
 
 		// The agent above this user, if any, earns on the same event. Inside
 		// the same transaction, so a failure rolls the whole approval back.

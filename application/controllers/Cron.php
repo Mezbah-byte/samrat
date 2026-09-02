@@ -16,7 +16,7 @@ class Cron extends MY_Controller {
 	public function __construct()
 	{
 		parent::__construct();
-		$this->load->library('investment_lib');
+		$this->load->library(array('investment_lib', 'team_bonus_lib'));
 	}
 
 	public function index()
@@ -30,6 +30,14 @@ class Cron extends MY_Controller {
 
 		$started = microtime(TRUE);
 		$report  = $this->investment_lib->run_daily_cron();
+
+		// The team bonus counters only ever move up on deposit approval, so a
+		// deposit edited or reversed by hand would leave a progress bar reading
+		// too high forever. This rebuilds them from `deposits`, which is the
+		// only authority, and re-checks anyone it corrected.
+		$team = $this->team_bonus_lib->recompute();
+		$report['team_scanned']   = $team['scanned'];
+		$report['team_corrected'] = $team['corrected'];
 
 		$report['date']        = date('Y-m-d H:i:s');
 		$report['duration_ms'] = (int) round((microtime(TRUE) - $started) * 1000);

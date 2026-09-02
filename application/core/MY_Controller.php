@@ -149,6 +149,16 @@ class User_Controller extends MY_Controller {
 		$today_progress = $this->investment_lib->today_progress($this->user->id);
 		$this->view_data['ads_remaining']  = $today_progress['remaining'];
 		$this->view_data['ticker_notices'] = $this->notice_model->published(5);
+
+		// The sidebar badge for unclaimed team bonuses. One indexed COUNT, and
+		// only while the feature is on.
+		$this->view_data['team_bonus_claimable'] = 0;
+		if ($this->setting_model->get('team_bonus_enabled', '1') === '1')
+		{
+			$this->load->model('team_bonus_claim_model');
+			$this->view_data['team_bonus_claimable'] =
+				$this->team_bonus_claim_model->claimable_count($this->user->id);
+		}
 	}
 }
 

@@ -17,6 +17,18 @@ class Dashboard extends User_Controller {
 		$investments = $this->investment_model->active_for_user($this->user->id);
 		$history     = $this->daily_earning_model->for_user($this->user->id, 30);
 
+		// The team bonus card. NULL when the feature is off or no tier is
+		// running, and the view skips the card entirely on NULL.
+		$this->load->library('team_bonus_lib');
+		$team_bonus = $this->team_bonus_lib->enabled()
+			? $this->team_bonus_lib->progress($this->user->id)
+			: NULL;
+
+		if ($team_bonus !== NULL && empty($team_bonus['tiers']))
+		{
+			$team_bonus = NULL;
+		}
+
 		$this->render('user/dashboard', array(
 			'page_title'     => 'Dashboard',
 			'active_menu'    => 'dashboard',
@@ -26,6 +38,7 @@ class Dashboard extends User_Controller {
 			'investments'    => $investments,
 			'referral_count' => $this->user_model->referral_count($this->user->id),
 			'referral_total' => $this->referral_model->earned_total($this->user->id),
+			'team_bonus'     => $team_bonus,
 			'recent_tx'      => $this->transaction_model->all(array('user_id' => $this->user->id), 8),
 			'recent_days'    => array('rows' => array_slice($history['rows'], 0, 7), 'total' => $history['total']),
 			'earning_series' => $this->earning_series($history['rows']),

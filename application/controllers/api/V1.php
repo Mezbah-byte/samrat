@@ -532,6 +532,27 @@ class V1 extends API_Controller {
 		));
 	}
 
+	/**
+	 * Team volume bonus: the ladder, where this user stands on it, and what is
+	 * waiting to be claimed. Claiming itself stays web-only for now.
+	 */
+	public function team_bonus()
+	{
+		if ( ! $this->require_auth()) return;
+
+		$this->load->library('team_bonus_lib');
+
+		if ( ! $this->team_bonus_lib->enabled())
+		{
+			$this->ok(array('enabled' => FALSE, 'tiers' => array()));
+			return;
+		}
+
+		$this->team_bonus_lib->sync_unlocks($this->api_user->id);
+
+		$this->ok($this->team_bonus_lib->progress($this->api_user->id));
+	}
+
 	/* ----------------------------------------------------------------- */
 
 	protected function user_payload($user)

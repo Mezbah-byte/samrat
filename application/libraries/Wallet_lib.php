@@ -17,7 +17,7 @@ class Wallet_lib {
 	protected $CI;
 
 	/** Types that move money in. */
-	const CREDIT_TYPES = array('deposit', 'daily_profit', 'referral_bonus', 'refund', 'admin_credit', 'agent_commission');
+	const CREDIT_TYPES = array('deposit', 'daily_profit', 'referral_bonus', 'refund', 'admin_credit', 'agent_commission', 'team_bonus');
 
 	/** Types that move money out. */
 	const DEBIT_TYPES = array('investment', 'withdrawal', 'withdrawal_fee', 'admin_debit');
@@ -102,7 +102,11 @@ class Wallet_lib {
 			case 'daily_profit':
 				$update['total_earned'] = money_raw((float) $this->column($user_id, 'total_earned') + abs($signed));
 				break;
+			// Both are referral income, so both roll into the one lifetime
+			// figure the dashboard already shows. The `transactions` rows stay
+			// distinct, which is what the team bonus page reports from.
 			case 'referral_bonus':
+			case 'team_bonus':
 				$update['total_referral_bonus'] = money_raw((float) $this->column($user_id, 'total_referral_bonus') + abs($signed));
 				break;
 			case 'withdrawal':

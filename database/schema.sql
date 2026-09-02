@@ -62,6 +62,12 @@ CREATE TABLE `users` (
   `total_earned`         DECIMAL(18,8) NOT NULL DEFAULT 0,
   `total_withdrawn`      DECIMAL(18,8) NOT NULL DEFAULT 0,
   `total_referral_bonus` DECIMAL(18,8) NOT NULL DEFAULT 0,
+  -- Team volume bonus counters. Denormalised for the same reason the totals
+  -- above are: the progress bar renders on every dashboard load and cannot
+  -- afford a SUM() over `deposits`. Rebuilt by Team_bonus_lib::recompute().
+  `team_volume`          DECIMAL(18,8) NOT NULL DEFAULT 0 COMMENT 'lifetime approved deposits of direct referrals',
+  `team_best_single`     DECIMAL(18,8) NOT NULL DEFAULT 0 COMMENT 'largest single approved deposit by any direct referral',
+  `team_buyers`          INT UNSIGNED  NOT NULL DEFAULT 0 COMMENT 'direct referrals with at least one approved deposit',
   `status`               ENUM('active','pending','blocked') NOT NULL DEFAULT 'active',
   `api_token`            VARCHAR(80) DEFAULT NULL,
   `api_token_at`         DATETIME DEFAULT NULL,
@@ -297,12 +303,65 @@ CREATE TABLE `referral_commissions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
+-- Team volume bonus
+--
+-- Where referral_commissions pays a percentage of one deposit, this pays a
+-- flat milestone bonus once the purchases made by a user's DIRECT referrals
+-- add up to a target the admin sets. `mode` decides how that is measured:
+-- 'combined' sums the whole team, 'single' looks at the biggest single
+-- purchase any one member made.
+--
+-- Volume is lifetime cumulative and never resets; each tier is claimable once.
+-- ---------------------------------------------------------------------
+CREATE TABLE `team_bonus_tiers` (
+  `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name`          VARCHAR(80) NOT NULL,
+  `target_volume` DECIMAL(18,8) NOT NULL DEFAULT 0,
+  `bonus_amount`  DECIMAL(18,8) NOT NULL DEFAULT 0,
+  `mode`          ENUM('combined','single') NOT NULL DEFAULT 'combined'
+                  COMMENT 'combined = whole team summed, single = one member''s biggest purchase',
+  `min_referrals` SMALLINT UNSIGNED NOT NULL DEFAULT 0
+                  COMMENT 'extra gate: how many direct referrals must have bought at all. 0 = off',
+  `sort_order`    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `status`        ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `ix_tbt_status_target` (`status`,`target_volume`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- target_volume / bonus_amount / mode are snapshots, so an admin editing a
+-- tier changes what is still to come and never what was already promised.
+--
+-- unique(user_id, tier_id) is the real double-pay guard, mirroring
+-- uq_refcom_deposit_level above and uq_agentcomm on agent_commissions.
+CREATE TABLE `team_bonus_claims` (
+  `id`               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id`          INT UNSIGNED NOT NULL,
+  `tier_id`          INT UNSIGNED NOT NULL,
+  `target_volume`    DECIMAL(18,8) NOT NULL,
+  `bonus_amount`     DECIMAL(18,8) NOT NULL,
+  `mode`             ENUM('combined','single') NOT NULL DEFAULT 'combined',
+  `volume_at_unlock` DECIMAL(18,8) NOT NULL DEFAULT 0,
+  `status`           ENUM('unlocked','claimed') NOT NULL DEFAULT 'unlocked',
+  `unlocked_at`      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `claimed_at`       DATETIME DEFAULT NULL,
+  `transaction_id`   BIGINT UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_tbc_user_tier` (`user_id`,`tier_id`),
+  KEY `ix_tbc_user_status` (`user_id`,`status`),
+  KEY `ix_tbc_tier` (`tier_id`),
+  CONSTRAINT `fk_tbc_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)            ON DELETE CASCADE,
+  CONSTRAINT `fk_tbc_tier` FOREIGN KEY (`tier_id`) REFERENCES `team_bonus_tiers` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
 -- Single money ledger. Written only by Wallet_lib.
 -- ---------------------------------------------------------------------
 CREATE TABLE `transactions` (
   `id`              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id`         INT UNSIGNED NOT NULL,
-  `type`            ENUM('deposit','investment','daily_profit','referral_bonus','withdrawal','withdrawal_fee','refund','admin_credit','admin_debit','agent_commission') NOT NULL,
+  `type`            ENUM('deposit','investment','daily_profit','referral_bonus','withdrawal','withdrawal_fee','refund','admin_credit','admin_debit','agent_commission','team_bonus') NOT NULL,
   `amount`          DECIMAL(18,8) NOT NULL COMMENT 'signed: + credit, - debit',
   `balance_after`   DECIMAL(18,8) NOT NULL,
   `reference_table` VARCHAR(40) DEFAULT NULL,
@@ -595,6 +654,8 @@ INSERT INTO `settings` (`key`,`value`,`group`,`type`,`label`,`sort_order`) VALUE
 ('deposit_enabled','1','finance','boolean','Deposits Enabled',4),
 ('referral_require_active_upline','1','finance','boolean','Pay only active upline accounts',5),
 ('referral_require_upline_investment','0','finance','boolean','Upline must hold an active plan to earn',6),
+('team_bonus_enabled','1','finance','boolean','Team Volume Bonus Enabled',7),
+('team_bonus_require_active_upline','1','finance','boolean','Only active accounts can claim a team bonus',8),
 ('agent_panel_enabled','1','agent','boolean','Agent Panel Enabled',1),
 ('agent_min_team_size','50','agent','number','Active Team Size Required to Apply',2),
 ('agent_team_depth','20','agent','number','Team Depth Limit (generations)',3),
@@ -605,6 +666,13 @@ INSERT INTO `settings` (`key`,`value`,`group`,`type`,`label`,`sort_order`) VALUE
 ('maintenance_message','We are performing scheduled maintenance. Please check back soon.','system','textarea','Maintenance Message',3),
 ('cron_secret','154a4e0b3f11be75ac04c70089e4c9f0','system','text','Cron Secret Key',4),
 ('timezone','Asia/Dhaka','system','text','Timezone',5);
+
+-- Starter ladder, seeded INACTIVE on purpose: nothing pays out until an admin
+-- has looked at the numbers and switched a tier on.
+INSERT INTO `team_bonus_tiers` (`name`,`target_volume`,`bonus_amount`,`mode`,`min_referrals`,`sort_order`,`status`) VALUES
+('Bronze Team',  1000,  50, 'combined', 0, 1, 'inactive'),
+('Silver Team',  5000, 300, 'combined', 0, 2, 'inactive'),
+('Gold Team',   10000, 750, 'combined', 0, 3, 'inactive');
 
 INSERT INTO `notices` (`title`,`slug`,`content`,`type`,`is_pinned`,`status`,`published_at`) VALUES
 ('Welcome','welcome','<p>Choose a package, deposit via USDT, complete your daily ads and earn every day.</p>','announcement',1,'published',NOW());
