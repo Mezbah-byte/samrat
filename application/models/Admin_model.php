@@ -21,6 +21,7 @@ class Admin_model extends MY_Model {
 		return array(
 			'deposits'    => (int) $this->db->where('status', 'pending')->count_all_results('deposits'),
 			'withdrawals' => (int) $this->db->where('status', 'pending')->count_all_results('withdrawals'),
+			'agent_applications' => (int) $this->db->where('status', 'pending')->count_all_results('agent_applications'),
 		);
 	}
 }

@@ -44,6 +44,18 @@ $route['profile/avatar']        = 'profile/avatar';
 $route['transactions']          = 'transactions/index';
 $route['notifications']         = 'notifications/index';
 $route['notifications/read/(:num)'] = 'notifications/read/$1';
+$route['agentship']             = 'agentship/index';
+$route['agentship/apply']       = 'agentship/apply';
+
+/* -----------------------------------------------------------------
+ | Agent panel  -> application/controllers/agent/
+ |
+ | Explicit, because CI would otherwise resolve agent/login to a
+ | controllers/agent/Login.php that does not exist.
+ | ----------------------------------------------------------------- */
+$route['agent']                 = 'agent/dashboard/index';
+$route['agent/login']           = 'agent/auth/login';
+$route['agent/logout']          = 'agent/auth/logout';
 
 /* -----------------------------------------------------------------
  | Admin
@@ -57,6 +69,10 @@ $route['admin/deposit-methods']              = 'admin/deposit_methods/index';
 $route['admin/referral-levels/(:any)/(:num)'] = 'admin/referral_levels/$1/$2';
 $route['admin/referral-levels/(:any)']       = 'admin/referral_levels/$1';
 $route['admin/referral-levels']              = 'admin/referral_levels/index';
+$route['admin/agent-applications/(:any)/(:num)/(:any)'] = 'admin/agent_applications/$1/$2/$3';
+$route['admin/agent-applications/(:any)/(:num)']        = 'admin/agent_applications/$1/$2';
+$route['admin/agent-applications/(:any)']               = 'admin/agent_applications/$1';
+$route['admin/agent-applications']                      = 'admin/agent_applications/index';
 
 /* -----------------------------------------------------------------
  | API v1  -> application/controllers/api/V1.php

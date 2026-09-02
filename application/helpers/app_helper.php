@@ -63,6 +63,56 @@ if ( ! function_exists('upload_url'))
 	}
 }
 
+if ( ! function_exists('stream_nid'))
+{
+	/**
+	 * Sends one NID scan to the browser and stops.
+	 *
+	 * NID images are PII, so uploads/nid/ is denied at the webserver and this
+	 * is the only route to one. Callers MUST have checked the session first -
+	 * this function authorises nothing.
+	 *
+	 * $side selects between two fixed column names and never reaches the
+	 * filesystem; the stored filename is basename()d before it does.
+	 *
+	 * @param object $row  a row carrying nid_front / nid_back columns
+	 * @param string $side 'front' or 'back'
+	 */
+	function stream_nid($row, $side)
+	{
+		$column = ($side === 'back') ? 'nid_back' : 'nid_front';
+		$file   = (is_object($row) && ! empty($row->{$column})) ? $row->{$column} : NULL;
+
+		if ( ! $file)
+		{
+			show_404();
+		}
+
+		$path = UPLOAD_PATH.'nid'.DIRECTORY_SEPARATOR.basename($file);
+
+		if ( ! is_file($path))
+		{
+			show_404();
+		}
+
+		$info = getimagesize($path);
+
+		if ( ! $info || empty($info['mime']))
+		{
+			show_404();
+		}
+
+		header('Content-Type: '.$info['mime']);
+		header('Content-Length: '.filesize($path));
+		header('Content-Disposition: inline; filename="nid-'.$column.'"');
+		header('X-Content-Type-Options: nosniff');
+		header('Cache-Control: private, no-store');
+
+		readfile($path);
+		exit;
+	}
+}
+
 if ( ! function_exists('avatar_url'))
 {
 	function avatar_url($file)
@@ -216,6 +266,7 @@ if ( ! function_exists('tx_label'))
 			'refund'         => 'Refund',
 			'admin_credit'   => 'Admin Credit',
 			'admin_debit'    => 'Admin Debit',
+			'agent_commission' => 'Agent Commission',
 		);
 		return isset($map[$type]) ? $map[$type] : ucfirst(str_replace('_', ' ', $type));
 	}

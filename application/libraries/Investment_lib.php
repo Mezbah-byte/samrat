@@ -26,7 +26,7 @@ class Investment_lib {
 			'daily_earning_model', 'referral_model', 'referral_level_model',
 			'ad_model', 'notification_model', 'setting_model',
 		));
-		$this->CI->load->library('wallet_lib');
+		$this->CI->load->library(array('wallet_lib', 'agent_lib'));
 	}
 
 	/* =================================================================
@@ -99,6 +99,10 @@ class Investment_lib {
 		);
 
 		$this->pay_referral_commission($deposit);
+
+		// The agent above this user, if any, earns on the same event. Inside
+		// the same transaction, so a failure rolls the whole approval back.
+		$this->CI->agent_lib->pay_deposit_commission($deposit);
 
 		// Day 1 opens immediately so the user can start watching ads today.
 		$this->ensure_day_row($investment_id, $deposit->user_id, $start, $daily_amount, $package->daily_ads);
@@ -395,6 +399,10 @@ class Investment_lib {
 		$db->set('days_credited', 'days_credited + 1', FALSE)
 			->set('total_earned', 'total_earned + '.$db->escape(money_raw($row->amount)), FALSE)
 			->where('id', $investment->id)->update('investments');
+
+		// Guarded by the affected_rows() check above, so a concurrent request
+		// that lost the race never reaches here and cannot double-pay.
+		$this->CI->agent_lib->pay_profit_commission($row);
 
 		return TRUE;
 	}

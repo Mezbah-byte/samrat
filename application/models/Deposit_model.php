@@ -68,6 +68,68 @@ class Deposit_model extends MY_Model {
 		return array('rows' => $rows, 'total' => $total);
 	}
 
+	/**
+	 * The admin listing narrowed to one set of users - the agent panel's team
+	 * scope. An empty id set means an empty result, never the whole platform.
+	 */
+	public function paginate_for_users($ids, $limit, $offset, $status = '', $search = '')
+	{
+		if (empty($ids))
+		{
+			return array('rows' => array(), 'total' => 0);
+		}
+
+		$build = function () use ($ids, $status, $search) {
+			$this->db->from('deposits d')
+				->join('users u', 'u.id = d.user_id', 'left')
+				->join('packages p', 'p.id = d.package_id', 'left')
+				->where_in('d.user_id', $ids);
+
+			if ($status !== '')
+			{
+				$this->db->where('d.status', $status);
+			}
+			if ($search !== '')
+			{
+				$this->db->group_start()
+					->like('u.username', $search)
+					->or_like('u.email', $search)
+					->or_like('d.txid', $search)
+				->group_end();
+			}
+		};
+
+		$build();
+		$total = (int) $this->db->count_all_results();
+
+		$build();
+		$rows = $this->db->select('d.*, u.username, u.full_name, p.name AS package_name')
+			->order_by('d.id', 'DESC')->limit($limit, $offset)->get()->result();
+
+		return array('rows' => $rows, 'total' => $total);
+	}
+
+	/** Pending / recommended counters for one team. */
+	public function team_stats($ids)
+	{
+		if (empty($ids))
+		{
+			return array('pending_count' => 0, 'approved_total' => 0.0, 'awaiting_review' => 0);
+		}
+
+		$approved = $this->db->select_sum('amount', 'total')
+			->where_in('user_id', $ids)->where('status', 'approved')->get($this->table)->row();
+
+		return array(
+			'pending_count'  => (int) $this->db->where_in('user_id', $ids)
+				->where('status', 'pending')->count_all_results($this->table),
+			'approved_total' => (float) ($approved->total ?: 0),
+			'awaiting_review' => (int) $this->db->where_in('user_id', $ids)
+				->where('status', 'pending')->where('agent_recommendation', NULL)
+				->count_all_results($this->table),
+		);
+	}
+
 	public function stats()
 	{
 		$approved = $this->db->select_sum('amount', 'total')->where('status', 'approved')->get($this->table)->row();

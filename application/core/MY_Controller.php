@@ -213,6 +213,123 @@ class Admin_Controller extends MY_Controller {
 
 /* ===================================================================== */
 
+/**
+ * Agents are a third tier, between users and admins: their own table, their
+ * own session key, their own login. An agent session can no more satisfy the
+ * admin guard than a user session can.
+ *
+ * An agent sees only their own referral downline. That boundary is team_ids()
+ * and nothing else - every team-scoped query in the agent panel goes through
+ * it, and a detail screen re-checks membership rather than trusting the id in
+ * the URL.
+ */
+class Agent_Controller extends MY_Controller {
+
+	/** @var object logged-in agent row */
+	protected $agent;
+
+	/** @var int[]|null memoised downline, resolved on first use */
+	private $team_cache = NULL;
+
+	public function __construct()
+	{
+		parent::__construct();
+
+		$this->layout = 'layouts/agent';
+
+		$this->load->model(array('agent_model', 'agent_log_model', 'user_model'));
+
+		$aid = $this->session->userdata('agent_id');
+		if ( ! $aid)
+		{
+			$this->session->set_flashdata('error', 'Please log in to continue.');
+			redirect('agent/login');
+		}
+
+		$this->agent = $this->agent_model->find($aid);
+
+		if ( ! $this->agent || $this->agent->status !== 'active')
+		{
+			$this->session->unset_userdata(array('agent_id', 'agent_name', 'agent_username'));
+			$this->session->set_flashdata('error', 'Agent session is no longer valid.');
+			redirect('agent/login');
+		}
+
+		// Switching the panel off locks agents out without a rollback.
+		if ($this->setting_model->get('agent_panel_enabled', '1') !== '1')
+		{
+			$this->session->unset_userdata(array('agent_id', 'agent_name', 'agent_username'));
+			$this->session->set_flashdata('error', 'The agent panel is currently disabled.');
+			redirect('agent/login');
+		}
+
+		if ($this->setting_model->get('maintenance_mode', '0') === '1')
+		{
+			$this->output->set_status_header(503);
+			$this->load->view('errors/maintenance', array(
+				'company_name' => $this->view_data['company_name'],
+				'message'      => $this->setting_model->get('maintenance_message', 'We will be back shortly.'),
+			));
+			$this->output->_display();
+			exit;
+		}
+
+		$this->view_data['agent']       = $this->agent;
+		$this->view_data['agent_stats'] = $this->agent_model->sidebar_badges($this->team_ids());
+	}
+
+	/**
+	 * Every user id below this agent's linked account.
+	 *
+	 * An agent with no linked user gets an empty array, which must produce an
+	 * empty result set - never an unscoped one. Callers pass this straight to
+	 * models that short-circuit on empty rather than to a bare where_in().
+	 *
+	 * @return int[]
+	 */
+	protected function team_ids()
+	{
+		if ($this->team_cache === NULL)
+		{
+			$this->team_cache = $this->agent->user_id
+				? $this->user_model->downline_ids($this->agent->user_id)
+				: array();
+		}
+
+		return $this->team_cache;
+	}
+
+	/** Is this user inside the agent's team? The gate on every detail screen. */
+	protected function owns_user($user_id)
+	{
+		return in_array((int) $user_id, $this->team_ids(), TRUE);
+	}
+
+	/** Bounces to the team list unless the user belongs to this agent. */
+	protected function require_team_member($user_id)
+	{
+		if ( ! $this->owns_user($user_id))
+		{
+			$this->session->set_flashdata('error', 'That account is not in your team.');
+			redirect('agent/team');
+		}
+	}
+
+	protected function log_action($action, $module, $reference_id = NULL, $detail = NULL)
+	{
+		$this->agent_log_model->insert(array(
+			'agent_id'     => $this->agent->id,
+			'action'       => $action,
+			'module'       => $module,
+			'reference_id' => $reference_id,
+			'detail'       => $detail !== NULL ? mb_substr($detail, 0, 500) : NULL,
+			'ip_address'   => $this->input->ip_address(),
+		));
+	}
+}
+
+/* ===================================================================== */
+
 class API_Controller extends MY_Controller {
 
 	/** @var object|null authenticated user, set by require_auth() */

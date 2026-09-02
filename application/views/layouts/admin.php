@@ -41,6 +41,10 @@
   <div class="nav-section">Manage</div>
   <nav class="nav flex-column">
     <a class="nav-link <?php echo active_if($active_menu, 'users'); ?>" href="<?php echo base_url('admin/users'); ?>"><i class="bi bi-people-fill"></i> Users</a>
+    <a class="nav-link <?php echo active_if($active_menu, 'agent_applications'); ?>" href="<?php echo base_url('admin/agent-applications'); ?>">
+      <i class="bi bi-clipboard-check"></i> Agentship
+      <?php if ( ! empty($admin_stats['agent_applications'])): ?><span class="badge text-bg-warning ms-auto"><?php echo (int) $admin_stats['agent_applications']; ?></span><?php endif; ?>
+    </a>
     <a class="nav-link <?php echo active_if($active_menu, 'packages'); ?>" href="<?php echo base_url('admin/packages'); ?>"><i class="bi bi-box-seam"></i> Packages</a>
     <a class="nav-link <?php echo active_if($active_menu, 'deposit_methods'); ?>" href="<?php echo base_url('admin/deposit-methods'); ?>"><i class="bi bi-wallet2"></i> Wallets</a>
     <a class="nav-link <?php echo active_if($active_menu, 'ads'); ?>" href="<?php echo base_url('admin/ads'); ?>"><i class="bi bi-badge-ad"></i> Ads</a>
@@ -53,6 +57,7 @@
     <a class="nav-link <?php echo active_if($active_menu, 'settings'); ?>" href="<?php echo base_url('admin/settings'); ?>"><i class="bi bi-sliders"></i> Settings</a>
     <?php if ($admin->role === 'super_admin'): ?>
       <a class="nav-link <?php echo active_if($active_menu, 'admins'); ?>" href="<?php echo base_url('admin/admins'); ?>"><i class="bi bi-person-badge"></i> Admins</a>
+      <a class="nav-link <?php echo active_if($active_menu, 'agents'); ?>" href="<?php echo base_url('admin/agents'); ?>"><i class="bi bi-person-vcard"></i> Agents</a>
     <?php endif; ?>
     <a class="nav-link <?php echo active_if($active_menu, 'logs'); ?>" href="<?php echo base_url('admin/logs'); ?>"><i class="bi bi-clock-history"></i> Activity Log</a>
     <a class="nav-link" href="<?php echo base_url('admin/logout'); ?>"><i class="bi bi-box-arrow-right"></i> Logout</a>

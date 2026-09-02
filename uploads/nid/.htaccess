@@ -1,0 +1,11 @@
+# NID scans are PII. The parent uploads/.htaccess only stops execution; this
+# stops reading. Every NID image is served instead through an authenticated
+# controller: admin/agents/nid/{id}/{side} or
+# admin/agent-applications/nid/{id}/{side}.
+Require all denied
+
+# Apache 2.2 fallback.
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

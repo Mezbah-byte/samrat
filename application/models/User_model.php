@@ -112,6 +112,129 @@ class User_model extends MY_Model {
 		return $counts;
 	}
 
+	/**
+	 * Every id below this user, flattened, as one list.
+	 *
+	 * Same walk as generation_ids(), but the depth here is a team boundary
+	 * rather than a commission ladder, so it comes from the agent_team_depth
+	 * setting instead of Referral_level_model::max_level() - which defaults to
+	 * 3 and would silently amputate the team.
+	 *
+	 * @return int[] may be empty; never contains $user_id itself
+	 */
+	public function downline_ids($user_id, $depth = NULL)
+	{
+		if ( ! $user_id)
+		{
+			return array();
+		}
+
+		if ($depth === NULL)
+		{
+			$depth = (int) setting('agent_team_depth', 20);
+		}
+
+		$out = array();
+
+		foreach ($this->generation_ids($user_id, $depth) as $ids)
+		{
+			foreach ($ids as $id)
+			{
+				$out[] = $id;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * How many of this user's downline are active accounts. This is the one
+	 * definition of "team size" the agentship gate reads - the apply screen,
+	 * the POST re-check and the application snapshot all call it.
+	 */
+	public function active_downline_count($user_id, $depth = NULL)
+	{
+		$ids = $this->downline_ids($user_id, $depth);
+
+		if (empty($ids))
+		{
+			return 0;
+		}
+
+		return (int) $this->db->where_in('id', $ids)
+			->where('status', 'active')
+			->count_all_results($this->table);
+	}
+
+	/** Paged downline listing for the agent's team screen. */
+	public function paginate_downline($ids, $limit, $offset, $status = '', $search = '')
+	{
+		if (empty($ids))
+		{
+			return array('rows' => array(), 'total' => 0);
+		}
+
+		$build = function () use ($ids, $status, $search) {
+			$this->db->where_in('id', $ids);
+
+			if ($status !== '')
+			{
+				$this->db->where('status', $status);
+			}
+			if ($search !== '')
+			{
+				$this->db->group_start()
+					->like('full_name', $search)
+					->or_like('username', $search)
+					->or_like('email', $search)
+					->or_like('referral_code', $search)
+				->group_end();
+			}
+		};
+
+		$build();
+		$total = (int) $this->db->count_all_results($this->table);
+
+		$build();
+		$rows = $this->db->order_by('id', 'DESC')->limit((int) $limit, (int) $offset)
+			->get($this->table)->result();
+
+		return array('rows' => $rows, 'total' => $total);
+	}
+
+	/** Headline numbers for the agent dashboard, over one id set. */
+	public function team_stats($ids)
+	{
+		if (empty($ids))
+		{
+			return array('total' => 0, 'active' => 0, 'pending' => 0, 'blocked' => 0,
+				'total_deposit' => 0.0, 'joined_30d' => 0);
+		}
+
+		$row = $this->db->select('COUNT(*) AS total', FALSE)
+			->select_sum('total_deposit', 'total_deposit')
+			->where_in('id', $ids)->get($this->table)->row();
+
+		$by_status = array('active' => 0, 'pending' => 0, 'blocked' => 0);
+
+		foreach ($this->db->select('status, COUNT(*) AS c', FALSE)->where_in('id', $ids)
+			->group_by('status')->get($this->table)->result() as $r)
+		{
+			$by_status[$r->status] = (int) $r->c;
+		}
+
+		return array(
+			'total'         => (int) $row->total,
+			'active'        => $by_status['active'],
+			'pending'       => $by_status['pending'],
+			'blocked'       => $by_status['blocked'],
+			'total_deposit' => (float) ($row->total_deposit ?: 0),
+			'joined_30d'    => (int) $this->db->where_in('id', $ids)
+				->where('created_at >=', date('Y-m-d 00:00:00', strtotime('-30 days')))
+				->count_all_results($this->table),
+		);
+	}
+
 	public function paginate_users($limit, $offset, $status = '', $search = '')
 	{
 		$where = array();

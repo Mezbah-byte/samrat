@@ -46,6 +46,24 @@
       </ul>
     </div>
 
+    <?php if ( ! empty($deposit->agent_recommendation)): ?>
+      <div class="card mb-3">
+        <div class="card-header"><i class="bi bi-person-vcard"></i> Agent Recommendation</div>
+        <div class="card-body">
+          <p class="mb-2">
+            <?php echo badge($deposit->agent_recommendation === 'approve' ? 'approved' : 'rejected'); ?>
+            The agent recommends <strong><?php echo html_escape($deposit->agent_recommendation); ?></strong>,
+            <?php echo fmt_date($deposit->agent_reviewed_at); ?>.
+          </p>
+          <?php if ( ! empty($deposit->agent_note)): ?>
+            <div class="text-muted small mb-1">Agent note</div>
+            <div class="small"><?php echo html_escape($deposit->agent_note); ?></div>
+          <?php endif; ?>
+          <p class="text-muted small mb-0 mt-2">Advisory only. The decision below is yours.</p>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <?php if ($deposit->status === 'pending'): ?>
       <div class="card">
         <div class="card-header"><i class="bi bi-check2-square"></i> Decision</div>

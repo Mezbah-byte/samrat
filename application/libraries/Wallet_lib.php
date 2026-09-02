@@ -17,7 +17,7 @@ class Wallet_lib {
 	protected $CI;
 
 	/** Types that move money in. */
-	const CREDIT_TYPES = array('deposit', 'daily_profit', 'referral_bonus', 'refund', 'admin_credit');
+	const CREDIT_TYPES = array('deposit', 'daily_profit', 'referral_bonus', 'refund', 'admin_credit', 'agent_commission');
 
 	/** Types that move money out. */
 	const DEBIT_TYPES = array('investment', 'withdrawal', 'withdrawal_fee', 'admin_debit');

@@ -13,10 +13,21 @@ $nav = array(
 	),
 	'Account' => array(
 		array('profile',       'profile',       'user-cog',         'Profile'),
+		// Always listed while the panel is on: the page itself explains where
+		// the user stands. Gating on a live team count would run a downline
+		// walk on every single page render.
+		array('agentship',     'agentship',     'badge-check',      'Agentship'),
 		array('notifications', 'notifications', 'bell',             'Notifications', ! empty($unread_count) ? (int) $unread_count : 0, 'alert'),
 		array('notices',       'notices',       'megaphone',        'Notice Board'),
 	),
 );
+
+if (setting('agent_panel_enabled', '1') !== '1')
+{
+	$nav['Account'] = array_values(array_filter($nav['Account'], function ($l) {
+		return $l[0] !== 'agentship';
+	}));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">

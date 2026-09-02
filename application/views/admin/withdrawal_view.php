@@ -40,6 +40,24 @@
   </div>
 
   <div class="col-lg-5">
+    <?php if ( ! empty($withdrawal->agent_recommendation)): ?>
+      <div class="card mb-3">
+        <div class="card-header"><i class="bi bi-person-vcard"></i> Agent Recommendation</div>
+        <div class="card-body">
+          <p class="mb-2">
+            <?php echo badge($withdrawal->agent_recommendation === 'approve' ? 'approved' : 'rejected'); ?>
+            The agent recommends <strong><?php echo html_escape($withdrawal->agent_recommendation); ?></strong>,
+            <?php echo fmt_date($withdrawal->agent_reviewed_at); ?>.
+          </p>
+          <?php if ( ! empty($withdrawal->agent_note)): ?>
+            <div class="text-muted small mb-1">Agent note</div>
+            <div class="small"><?php echo html_escape($withdrawal->agent_note); ?></div>
+          <?php endif; ?>
+          <p class="text-muted small mb-0 mt-2">Advisory only. The decision below is yours.</p>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <?php if (in_array($withdrawal->status, array('pending', 'approved'), TRUE)): ?>
       <div class="card mb-3">
         <div class="card-header"><i class="bi bi-check2-square"></i> Actions</div>

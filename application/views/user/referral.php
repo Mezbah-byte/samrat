@@ -81,7 +81,68 @@ $tiles = array(
   </div>
 </div>
 
-<div class="panel mb-3 reveal" data-reveal-order="5">
+<?php if ($agent_enabled): ?>
+  <?php
+  $agent_pct  = $agent_threshold > 0 ? min(100, ($agent_team_active / $agent_threshold) * 100) : 100;
+  $agent_open = $agent_application && in_array($agent_application->status, array('pending', 'approved'), TRUE);
+  ?>
+  <div class="panel mb-3 reveal" data-reveal-order="5">
+    <div class="panel-head"><i data-lucide="badge-check"></i> Agentship</div>
+    <div class="panel-body">
+
+      <?php if ($agent_application && $agent_application->status === 'approved'): ?>
+        <p class="mb-2">
+          <?php echo chip('approved'); ?>
+          You are an agent. Sign in to your panel with the credentials the admin gave you.
+        </p>
+        <a href="<?php echo base_url('agent/login'); ?>" class="btn btn-grad"><i data-lucide="log-in"></i> Agent Panel</a>
+
+      <?php elseif ($agent_application && $agent_application->status === 'pending'): ?>
+        <p class="mb-2">
+          <?php echo chip('pending'); ?>
+          Your application is with the admin. You will be notified when it is reviewed.
+        </p>
+        <a href="<?php echo base_url('agentship'); ?>" class="btn btn-quiet">View application</a>
+
+      <?php else: ?>
+        <p class="text-muted mb-3">
+          Grow a team of <strong><?php echo (int) $agent_threshold; ?></strong> active accounts and you can
+          apply to become an agent &mdash; your own panel, your own team screens, and commission on
+          everything your team deposits and earns.
+          <?php if ($agent_application && $agent_application->status === 'rejected'): ?>
+            <br><?php echo chip('rejected'); ?>
+            Your last application was declined<?php echo $agent_application->admin_note
+              ? ': '.html_escape($agent_application->admin_note) : '.'; ?>
+            You can apply again.
+          <?php endif; ?>
+        </p>
+
+        <div class="d-flex justify-content-between small mb-1">
+          <span class="text-muted">Active team members</span>
+          <span class="fw-semibold"><?php echo (int) $agent_team_active; ?> / <?php echo (int) $agent_threshold; ?></span>
+        </div>
+        <div class="progress mb-3" style="height:8px">
+          <div class="progress-bar" role="progressbar" style="width: <?php echo $agent_pct; ?>%"
+               aria-valuenow="<?php echo (int) $agent_team_active; ?>" aria-valuemin="0"
+               aria-valuemax="<?php echo (int) $agent_threshold; ?>"></div>
+        </div>
+
+        <?php if ($agent_team_active >= $agent_threshold && ! $agent_open): ?>
+          <a href="<?php echo base_url('agentship/apply'); ?>" class="btn btn-grad">
+            <i data-lucide="badge-check"></i> Apply for Agentship
+          </a>
+        <?php else: ?>
+          <button class="btn btn-quiet" disabled>
+            <?php echo (int) max(0, $agent_threshold - $agent_team_active); ?> more active members to go
+          </button>
+        <?php endif; ?>
+      <?php endif; ?>
+
+    </div>
+  </div>
+<?php endif; ?>
+
+<div class="panel mb-3 reveal" data-reveal-order="6">
   <div class="panel-head"><i data-lucide="network"></i> Your Generations</div>
   <div class="table-wrap">
     <table class="table">
@@ -123,7 +184,7 @@ $tiles = array(
 
 <div class="row g-3">
   <div class="col-xl-6">
-    <div class="panel h-100 reveal" data-reveal-order="6">
+    <div class="panel h-100 reveal" data-reveal-order="7">
       <div class="panel-head"><i data-lucide="users"></i> My Referrals</div>
       <?php if (empty($downline)): ?>
         <div class="empty-state"><i data-lucide="user-plus"></i>No one has signed up with your ID yet.</div>
@@ -152,7 +213,7 @@ $tiles = array(
   </div>
 
   <div class="col-xl-6">
-    <div class="panel h-100 reveal" data-reveal-order="7">
+    <div class="panel h-100 reveal" data-reveal-order="8">
       <div class="panel-head"><i data-lucide="hand-coins"></i> Commission History</div>
       <?php if (empty($rows)): ?>
         <div class="empty-state"><i data-lucide="receipt"></i>No commission earned yet.</div>

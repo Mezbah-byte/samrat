@@ -20,7 +20,7 @@ class Auth_lib {
 	{
 		$this->CI =& get_instance();
 		$this->CI->load->database();
-		$this->CI->load->model(array('user_model', 'admin_model'));
+		$this->CI->load->model(array('user_model', 'admin_model', 'agent_model'));
 	}
 
 	/* =================================================================
@@ -202,6 +202,70 @@ class Auth_lib {
 	public function admin_logout()
 	{
 		$this->CI->session->unset_userdata(array('admin_id', 'admin_name', 'admin_role'));
+	}
+
+	/* =================================================================
+	 | Agents
+	 |================================================================= */
+
+	/**
+	 * There is no agent_register() counterpart on purpose. Agents are created
+	 * by an admin or promoted through an approved application - never by
+	 * signing up.
+	 *
+	 * @return array{ok:bool,message:string,agent:?object}
+	 */
+	public function agent_login($identity, $password)
+	{
+		$identity = trim($identity);
+
+		if ($this->CI->setting_model->get('agent_panel_enabled', '1') !== '1')
+		{
+			return array('ok' => FALSE, 'message' => 'The agent panel is currently disabled.', 'agent' => NULL);
+		}
+
+		if ($this->is_locked_out('agent', $identity))
+		{
+			return array('ok' => FALSE, 'message' => 'Too many failed attempts. Try again in '.self::LOCKOUT_MINS.' minutes.', 'agent' => NULL);
+		}
+
+		$agent = $this->CI->agent_model->by_login($identity);
+
+		if ( ! $agent || ! password_verify($password, $agent->password))
+		{
+			$this->record_attempt('agent', $identity);
+			return array('ok' => FALSE, 'message' => 'Incorrect username or password.', 'agent' => NULL);
+		}
+
+		if ($agent->status !== 'active')
+		{
+			return array('ok' => FALSE, 'message' => 'This agent account is blocked.', 'agent' => NULL);
+		}
+
+		if (password_needs_rehash($agent->password, PASSWORD_BCRYPT))
+		{
+			$this->CI->agent_model->update($agent->id, array('password' => password_hash($password, PASSWORD_BCRYPT)));
+		}
+
+		$this->clear_attempts('agent', $identity);
+
+		$this->CI->agent_model->update($agent->id, array(
+			'last_login_at' => date('Y-m-d H:i:s'),
+			'last_login_ip' => $this->CI->input->ip_address(),
+		));
+
+		$this->CI->session->set_userdata(array(
+			'agent_id'       => $agent->id,
+			'agent_name'     => $agent->name,
+			'agent_username' => $agent->username,
+		));
+
+		return array('ok' => TRUE, 'message' => 'Welcome back.', 'agent' => $agent);
+	}
+
+	public function agent_logout()
+	{
+		$this->CI->session->unset_userdata(array('agent_id', 'agent_name', 'agent_username'));
 	}
 
 	/* =================================================================

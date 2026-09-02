@@ -5,7 +5,7 @@ class Referral extends User_Controller {
 
 	public function index()
 	{
-		$this->load->model(array('referral_model', 'referral_level_model'));
+		$this->load->model(array('referral_model', 'referral_level_model', 'agent_application_model'));
 
 		$per_page = 15;
 		$page     = max(1, (int) $this->input->get('page'));
@@ -13,6 +13,10 @@ class Referral extends User_Controller {
 
 		$ladder = $this->referral_level_model->ladder();
 		$depth  = $this->referral_level_model->max_level();
+
+		// The agentship card. The count here is only what the user is shown -
+		// Agentship::apply() re-derives it before accepting anything.
+		$agent_enabled = $this->setting_model->get('agent_panel_enabled', '1') === '1';
 
 		$this->render('user/referral', array(
 			'page_title'    => 'Referral',
@@ -29,6 +33,10 @@ class Referral extends User_Controller {
 			'total'         => $result['total'],
 			'per_page'      => $per_page,
 			'page'          => $page,
+			'agent_enabled'     => $agent_enabled,
+			'agent_threshold'   => (int) $this->setting_model->get('agent_min_team_size', 50),
+			'agent_team_active' => $agent_enabled ? $this->user_model->active_downline_count($this->user->id) : 0,
+			'agent_application' => $agent_enabled ? $this->agent_application_model->latest_for_user($this->user->id) : NULL,
 		));
 	}
 }
