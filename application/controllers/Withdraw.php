@@ -24,7 +24,6 @@ class Withdraw extends User_Controller {
 			'active_menu'  => 'withdraw',
 			'fee_percent'  => $fee_percent,
 			'floor'        => $floor,
-			'networks'     => network_list(),
 			'enabled'      => $this->setting_model->get('withdrawal_enabled', '1') === '1',
 			'pending'      => $this->withdrawal_model->pending_count_for_user($this->user->id),
 			'recent'       => $this->withdrawal_model->for_user($this->user->id, 5)['rows'],
@@ -40,23 +39,15 @@ class Withdraw extends User_Controller {
 		}
 
 		$this->form_validation->set_rules('amount', 'Amount', 'required|numeric|greater_than[0]');
-		$this->form_validation->set_rules('network', 'Network', 'required|trim');
-		$this->form_validation->set_rules('wallet_address', 'Wallet Address', 'required|trim|min_length[20]|max_length[191]');
+		$this->form_validation->set_rules('binance_id', 'Binance ID', 'required|trim|numeric|min_length[6]|max_length[32]');
 
 		if ( ! $this->form_validation->run())
 		{
 			return;
 		}
 
-		$amount  = round((float) $this->input->post('amount'), MONEY_SCALE);
-		$network = $this->input->post('network', TRUE);
-		$wallet  = $this->input->post('wallet_address', TRUE);
-
-		if ( ! array_key_exists($network, network_list()))
-		{
-			$this->session->set_flashdata('error', 'Choose a supported network.');
-			redirect('withdraw');
-		}
+		$amount = round((float) $this->input->post('amount'), MONEY_SCALE);
+		$wallet = $this->input->post('binance_id', TRUE);
 
 		if ($floor <= 0)
 		{
@@ -90,7 +81,7 @@ class Withdraw extends User_Controller {
 			'fee_percent'    => $fee_percent,
 			'fee'            => money_raw($fee),
 			'net_amount'     => money_raw($net),
-			'network'        => $network,
+			'network'        => WITHDRAW_NETWORK,
 			'wallet_address' => $wallet,
 			'status'         => 'pending',
 		));

@@ -344,21 +344,16 @@ class V1 extends API_Controller {
 		$this->load->model(array('withdrawal_model', 'investment_model'));
 		$this->load->library('wallet_lib');
 
-		$amount  = round((float) $this->field('amount'), MONEY_SCALE);
-		$network = (string) $this->field('network');
-		$wallet  = trim((string) $this->field('wallet_address'));
+		$amount = round((float) $this->field('amount'), MONEY_SCALE);
+		$wallet = trim((string) $this->field('binance_id'));
 
 		if ($amount <= 0)
 		{
 			return $this->fail('Amount must be greater than zero.', 422);
 		}
-		if ( ! array_key_exists($network, network_list()))
+		if ( ! ctype_digit($wallet) OR strlen($wallet) < 6 OR strlen($wallet) > 32)
 		{
-			return $this->fail('Unsupported network.', 422);
-		}
-		if (strlen($wallet) < 20)
-		{
-			return $this->fail('A valid wallet address is required.', 422);
+			return $this->fail('A valid Binance ID is required.', 422);
 		}
 
 		$floor = $this->investment_model->withdraw_floor($this->api_user->id);
@@ -391,7 +386,7 @@ class V1 extends API_Controller {
 			'fee_percent'    => $fee_percent,
 			'fee'            => money_raw($fee),
 			'net_amount'     => money_raw($net),
-			'network'        => $network,
+			'network'        => WITHDRAW_NETWORK,
 			'wallet_address' => $wallet,
 			'status'         => 'pending',
 		));

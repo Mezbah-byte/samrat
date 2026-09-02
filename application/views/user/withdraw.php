@@ -38,19 +38,11 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Network <span class="text-bad">*</span></label>
-              <select name="network" class="form-select" required>
-                <?php foreach ($networks as $key => $label): ?>
-                  <option value="<?php echo html_escape($key); ?>" <?php echo set_select('network', $key); ?>><?php echo html_escape($label); ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">Your Wallet Address <span class="text-bad">*</span></label>
-              <input type="text" name="wallet_address" class="form-control mono" value="<?php echo set_value('wallet_address'); ?>" required minlength="20" maxlength="191">
+              <label class="form-label">Your Binance ID <span class="text-bad">*</span></label>
+              <input type="text" name="binance_id" class="form-control mono" value="<?php echo set_value('binance_id'); ?>"
+                     required minlength="6" maxlength="32" inputmode="numeric" pattern="[0-9]+" placeholder="e.g. 123456789">
               <div class="form-text text-bad">
-                Double-check this. Crypto sent to a wrong address cannot be recovered.
+                Payouts are sent to your Binance ID only. Double-check it &mdash; funds sent to a wrong ID cannot be recovered.
               </div>
             </div>
 
@@ -74,8 +66,8 @@
       <div class="panel-body small text-muted">
         <ol class="ps-3 mb-0 d-grid gap-2">
           <li>The requested amount is held from your balance right away.</li>
-          <li>An admin reviews the request and sends the payout on-chain.</li>
-          <li>Once paid, the transaction hash appears in your history.</li>
+          <li>An admin reviews the request and sends the payout to your Binance ID.</li>
+          <li>Once paid, the transfer reference appears in your history.</li>
           <li>If a request is rejected, the full amount is returned to your balance.</li>
         </ol>
         <?php if ($pending > 0): ?>
@@ -101,7 +93,7 @@
               <span class="icon-tile sm grad-teal"><i data-lucide="banknote"></i></span>
               <div class="feed-main">
                 <div class="feed-title num"><?php echo money($w->net_amount); ?> <span class="text-muted fw-normal">net</span></div>
-                <div class="feed-sub"><?php echo fmt_date($w->created_at, 'd M Y'); ?> &middot; <?php echo html_escape($w->network); ?></div>
+                <div class="feed-sub"><?php echo fmt_date($w->created_at, 'd M Y'); ?> &middot; <?php echo html_escape($w->wallet_address); ?></div>
               </div>
               <?php echo chip($w->status); ?>
             </div>

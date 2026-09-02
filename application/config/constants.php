@@ -93,3 +93,6 @@ defined('UPLOAD_PATH')  OR define('UPLOAD_PATH',  FCPATH . 'uploads' . DIRECTORY
 defined('ASSET_PATH')   OR define('ASSET_PATH',   FCPATH . 'assets'  . DIRECTORY_SEPARATOR);
 defined('MONEY_SCALE')  OR define('MONEY_SCALE',  8);
 defined('MONEY_DISPLAY') OR define('MONEY_DISPLAY', 2);
+
+// Payouts go to a Binance ID only; stored in withdrawals.network for the audit trail.
+defined('WITHDRAW_NETWORK') OR define('WITHDRAW_NETWORK', 'BINANCE');
