@@ -201,7 +201,7 @@ $tiles = array(
                 </td>
                 <td class="small"><?php echo html_escape($d->country); ?></td>
                 <td class="text-end num fw-semibold"><?php echo money($d->total_deposit); ?></td>
-                <td><?php echo chip($d->status); ?></td>
+                <td><?php echo chip(empty($d->has_active_package) ? 'inactive' : 'active'); ?></td>
                 <td class="small text-muted text-nowrap"><?php echo fmt_date($d->created_at, 'd M y'); ?></td>
               </tr>
             <?php endforeach; ?>

@@ -38,9 +38,18 @@ class User_model extends MY_Model {
 		return $code;
 	}
 
+	/**
+	 * Direct referrals, each row carrying `has_active_package` - 1 when that
+	 * user holds at least one investment still running. The referral screen
+	 * shows plan status there, not account status.
+	 */
 	public function direct_referrals($user_id, $limit = NULL, $offset = 0)
 	{
+		$inv  = $this->db->dbprefix('investments');
+		$self = $this->db->dbprefix($this->table);
 		$this->db->select('id, full_name, username, email, country, status, total_deposit, created_at')
+			->select('(SELECT COUNT(*) > 0 FROM `'.$inv.'` i WHERE i.user_id = `'.$self.'`.id'
+				." AND i.status = 'active') AS has_active_package", FALSE)
 			->where('referred_by', (int) $user_id)
 			->order_by('id', 'DESC');
 		if ($limit)
