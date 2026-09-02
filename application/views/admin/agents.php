@@ -82,6 +82,11 @@
           <td><?php echo badge($a->status); ?></td>
           <td class="small text-muted text-nowrap"><?php echo fmt_date($a->last_login_at, 'd M Y, H:i'); ?></td>
           <td class="text-end text-nowrap">
+            <?php if ($a->status === 'active'): ?>
+              <?php echo form_open('admin/impersonate/agent/'.$a->id, array('class' => 'd-inline')); ?>
+                <button class="btn btn-sm btn-outline-warning" title="Login as agent" data-confirm="Sign in as this agent? You will have full access to their panel and every action you take is logged against your admin account."><i class="bi bi-incognito"></i></button>
+              <?php echo form_close(); ?>
+            <?php endif; ?>
             <a href="<?php echo base_url('admin/agents/edit/'.$a->id); ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
             <?php echo form_open('admin/agents/delete/'.$a->id, array('class' => 'd-inline')); ?>
               <button class="btn btn-sm btn-outline-danger" data-confirm="Delete this agent? Their commission history is deleted too."><i class="bi bi-trash"></i></button>

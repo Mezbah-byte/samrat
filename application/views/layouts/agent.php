@@ -11,6 +11,8 @@
 </head>
 <body>
 
+<?php $this->load->view('partials/impersonate_banner'); ?>
+
 <aside class="app-sidebar" id="appSidebar">
   <div class="brand">
     <i class="bi bi-person-vcard-fill"></i>

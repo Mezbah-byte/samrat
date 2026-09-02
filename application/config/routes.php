@@ -65,6 +65,12 @@ $route['agent/logout']          = 'agent/auth/logout';
 $route['admin']                 = 'admin/dashboard/index';
 $route['admin/login']           = 'admin/auth/login';
 $route['admin/logout']          = 'admin/auth/logout';
+
+/* Impersonation. Starting is admin-side; stopping is not, because the request
+ | comes from inside the user or agent panel. */
+$route['admin/impersonate/user/(:num)']  = 'admin/impersonate/user/$1';
+$route['admin/impersonate/agent/(:num)'] = 'admin/impersonate/agent/$1';
+$route['impersonate/stop']               = 'impersonate/stop';
 $route['admin/deposit-methods/(:any)/(:num)'] = 'admin/deposit_methods/$1/$2';
 $route['admin/deposit-methods/(:any)']       = 'admin/deposit_methods/$1';
 $route['admin/deposit-methods']              = 'admin/deposit_methods/index';

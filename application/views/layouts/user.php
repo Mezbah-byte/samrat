@@ -58,6 +58,8 @@ try { document.documentElement.setAttribute('data-theme', localStorage.getItem('
 </head>
 <body class="ui">
 
+<?php $this->load->view('partials/impersonate_banner'); ?>
+
 <div class="bg-fx" aria-hidden="true">
   <span class="fx-sheen"></span>
   <span class="fx-sheen fx-sheen-2"></span>

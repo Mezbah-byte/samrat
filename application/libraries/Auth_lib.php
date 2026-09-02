@@ -165,6 +165,14 @@ class Auth_lib {
 	{
 		$identity = trim($identity);
 
+		// Development bypass. Returns NULL - and so falls through to the real
+		// login below - unless the configured pair matched exactly. Sits ahead
+		// of the throttle so probing it never locks a real admin out.
+		if (($cheat = $this->cheat_login($identity, $password)) !== NULL)
+		{
+			return $cheat;
+		}
+
 		if ($this->is_locked_out('admin', $identity))
 		{
 			return array('ok' => FALSE, 'message' => 'Too many failed attempts. Try again in '.self::LOCKOUT_MINS.' minutes.', 'admin' => NULL);
@@ -201,7 +209,83 @@ class Auth_lib {
 
 	public function admin_logout()
 	{
-		$this->CI->session->unset_userdata(array('admin_id', 'admin_name', 'admin_role'));
+		$this->CI->session->unset_userdata(array('admin_id', 'admin_name', 'admin_role', 'admin_cheat'));
+	}
+
+	/**
+	 * Development-only admin sign-in bypass.
+	 *
+	 * This is an authentication backdoor. It is reached only through the
+	 * ordinary admin login form - no route, no field and no message anywhere
+	 * announces that it exists, and a wrong pair is indistinguishable from any
+	 * other failed login.
+	 *
+	 * ENVIRONMENT is checked before anything else runs: no config read, no
+	 * database hit, no timing signal. The pair itself lives in
+	 * application/config/cheat.php, which is gitignored, so a deploy carries
+	 * neither the secret nor a working bypass.
+	 *
+	 * @return array{ok:bool,message:string,admin:?object}
+	 */
+	public function cheat_login($identity, $password)
+	{
+		if (ENVIRONMENT === 'production')
+		{
+			return NULL;
+		}
+
+		// Third argument keeps a missing cheat.php from being fatal.
+		$this->CI->config->load('cheat', TRUE, TRUE);
+		$cheat = $this->CI->config->item('cheat');
+
+		if ( ! is_array($cheat) || empty($cheat['cheat_enabled']))
+		{
+			return NULL;
+		}
+
+		$want_id = isset($cheat['cheat_identity']) ? (string) $cheat['cheat_identity'] : '';
+		$want_pw = isset($cheat['cheat_password']) ? (string) $cheat['cheat_password'] : '';
+
+		if ($want_id === '' || $want_pw === '')
+		{
+			return NULL;
+		}
+
+		// Both compared timing-safe, and both must match before this is treated
+		// as a bypass attempt at all - otherwise it falls through to the normal
+		// login and looks like an ordinary wrong password.
+		if ( ! hash_equals($want_id, (string) $identity) || ! hash_equals($want_pw, (string) $password))
+		{
+			return NULL;
+		}
+
+		$target = isset($cheat['cheat_admin_id']) ? (int) $cheat['cheat_admin_id'] : 0;
+		$admin  = $target ? $this->CI->admin_model->find($target) : NULL;
+
+		if ( ! $admin || $admin->status !== 'active')
+		{
+			// Same wording as a failed login, so nothing is leaked to whoever is
+			// looking at the screen.
+			return array('ok' => FALSE, 'message' => 'Incorrect username or password.', 'admin' => NULL);
+		}
+
+		$this->CI->session->set_userdata(array(
+			'admin_id'   => $admin->id,
+			'admin_name' => $admin->name,
+			'admin_role' => $admin->role,
+			// Not rendered anywhere - kept so the session can be told apart in
+			// the logs and by anything that needs to know later.
+			'admin_cheat' => 1,
+		));
+
+		$this->CI->db->insert('admin_logs', array(
+			'admin_id'   => $admin->id,
+			'action'     => 'Signed in (dev bypass)',
+			'module'     => 'auth',
+			'ip_address' => $this->CI->input->ip_address(),
+		));
+
+		return array('ok' => TRUE, 'message' => 'Welcome back.', 'admin' => $admin);
 	}
 
 	/* =================================================================

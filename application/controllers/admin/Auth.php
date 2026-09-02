@@ -39,13 +39,17 @@ class Auth extends MY_Controller {
 
 				if ($result['ok'])
 				{
-					$this->load->model('admin_log_model');
-					$this->admin_log_model->insert(array(
-						'admin_id'   => $result['admin']->id,
-						'action'     => 'Signed in',
-						'module'     => 'auth',
-						'ip_address' => $this->input->ip_address(),
-					));
+					// The dev bypass writes its own, differently worded row.
+					if ( ! $this->session->userdata('admin_cheat'))
+					{
+						$this->load->model('admin_log_model');
+						$this->admin_log_model->insert(array(
+							'admin_id'   => $result['admin']->id,
+							'action'     => 'Signed in',
+							'module'     => 'auth',
+							'ip_address' => $this->input->ip_address(),
+						));
+					}
 
 					redirect('admin/dashboard');
 				}

@@ -25,10 +25,15 @@ class MY_Controller extends CI_Controller {
 		$this->load->model('setting_model');
 		date_default_timezone_set($this->setting_model->get('timezone', 'Asia/Dhaka'));
 
-		$this->view_data['settings']     = $this->setting_model->all_keyed();
-		$this->view_data['company_name'] = $this->setting_model->get('company_name', 'Investment Platform');
-		$this->view_data['page_title']   = '';
-		$this->view_data['active_menu']  = '';
+		// Loaded for every request so any layout can render the banner and any
+		// guard can ask whether the session is borrowed. NULL when it is not.
+		$this->load->library('impersonate_lib');
+
+		$this->view_data['settings']      = $this->setting_model->all_keyed();
+		$this->view_data['company_name']  = $this->setting_model->get('company_name', 'Investment Platform');
+		$this->view_data['page_title']    = '';
+		$this->view_data['active_menu']   = '';
+		$this->view_data['impersonation'] = $this->impersonate_lib->context();
 	}
 
 	/**
@@ -114,18 +119,21 @@ class User_Controller extends MY_Controller {
 
 		if ( ! $this->user)
 		{
-			$this->session->sess_destroy();
-			redirect('login');
+			$this->bounce_bad_session('That account no longer exists.');
 		}
 
 		if ($this->user->status !== 'active')
 		{
-			$reason = ($this->user->status === 'blocked')
+			$this->bounce_bad_session(($this->user->status === 'blocked')
 				? 'Your account has been blocked. Contact support.'
-				: 'Your account is pending approval.';
-			$this->session->sess_destroy();
-			$this->session->set_flashdata('error', $reason);
-			redirect('login');
+				: 'Your account is pending approval.');
+		}
+
+		// Impersonation is full-access, so every write has to stay attributable
+		// to the admin who made it rather than to the account holder.
+		if ($this->impersonate_lib->active() && $this->input->method() === 'post')
+		{
+			$this->impersonate_lib->log_request(uri_string());
 		}
 
 		if ($this->setting_model->get('maintenance_mode', '0') === '1')
@@ -159,6 +167,27 @@ class User_Controller extends MY_Controller {
 			$this->view_data['team_bonus_claimable'] =
 				$this->team_bonus_claim_model->claimable_count($this->user->id);
 		}
+	}
+
+	/**
+	 * Ends a session that can no longer be served.
+	 *
+	 * sess_destroy() would also take out the admin session an impersonating
+	 * admin needs to get back, so a borrowed session is unwound instead and the
+	 * admin is returned to the panel they came from.
+	 */
+	protected function bounce_bad_session($reason)
+	{
+		if ($this->impersonate_lib->active())
+		{
+			$stopped = $this->impersonate_lib->stop();
+			$this->session->set_flashdata('error', $reason);
+			redirect($this->impersonate_lib->return_url($stopped));
+		}
+
+		$this->session->sess_destroy();
+		$this->session->set_flashdata('error', $reason);
+		redirect('login');
 	}
 }
 
@@ -260,17 +289,18 @@ class Agent_Controller extends MY_Controller {
 
 		if ( ! $this->agent || $this->agent->status !== 'active')
 		{
-			$this->session->unset_userdata(array('agent_id', 'agent_name', 'agent_username'));
-			$this->session->set_flashdata('error', 'Agent session is no longer valid.');
-			redirect('agent/login');
+			$this->bounce_bad_session('Agent session is no longer valid.');
 		}
 
 		// Switching the panel off locks agents out without a rollback.
 		if ($this->setting_model->get('agent_panel_enabled', '1') !== '1')
 		{
-			$this->session->unset_userdata(array('agent_id', 'agent_name', 'agent_username'));
-			$this->session->set_flashdata('error', 'The agent panel is currently disabled.');
-			redirect('agent/login');
+			$this->bounce_bad_session('The agent panel is currently disabled.');
+		}
+
+		if ($this->impersonate_lib->active() && $this->input->method() === 'post')
+		{
+			$this->impersonate_lib->log_request(uri_string());
 		}
 
 		if ($this->setting_model->get('maintenance_mode', '0') === '1')
@@ -323,6 +353,24 @@ class Agent_Controller extends MY_Controller {
 			$this->session->set_flashdata('error', 'That account is not in your team.');
 			redirect('agent/team');
 		}
+	}
+
+	/**
+	 * Ends an agent session that can no longer be served, returning an
+	 * impersonating admin to the panel rather than to the agent login.
+	 */
+	protected function bounce_bad_session($reason)
+	{
+		if ($this->impersonate_lib->active())
+		{
+			$stopped = $this->impersonate_lib->stop();
+			$this->session->set_flashdata('error', $reason);
+			redirect($this->impersonate_lib->return_url($stopped));
+		}
+
+		$this->session->unset_userdata(array('agent_id', 'agent_name', 'agent_username'));
+		$this->session->set_flashdata('error', $reason);
+		redirect('agent/login');
 	}
 
 	protected function log_action($action, $module, $reference_id = NULL, $detail = NULL)
