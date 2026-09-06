@@ -66,12 +66,13 @@ $terms = array(
       </div> -->
 
       <div class="d-flex flex-wrap gap-3 reveal" data-reveal-order="4">
-        <?php if ($mail = setting('support_email')): ?>
-          <a href="mailto:<?php echo html_escape($mail); ?>" class="btn btn-ghost"><i data-lucide="mail"></i> <?php echo html_escape($mail); ?></a>
-        <?php endif; ?>
-        <?php if ($tg = setting('support_telegram')): ?>
-          <a href="<?php echo html_escape($tg); ?>" target="_blank" rel="noopener" class="btn btn-ghost"><i data-lucide="send"></i> Telegram</a>
-        <?php endif; ?>
+        <?php foreach (support_channels() as $c): ?>
+          <a href="<?php echo html_escape($c->url); ?>" class="btn btn-ghost"
+             <?php echo $c->kind === 'link' ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
+            <i data-lucide="<?php echo html_escape($c->icon); ?>"></i>
+            <?php echo html_escape($c->kind === 'link' ? $c->label : $c->value); ?>
+          </a>
+        <?php endforeach; ?>
       </div>
     </div>
   </div>

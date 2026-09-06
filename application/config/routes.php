@@ -48,6 +48,7 @@ $route['notifications']         = 'notifications/index';
 $route['notifications/read/(:num)'] = 'notifications/read/$1';
 $route['agentship']             = 'agentship/index';
 $route['agentship/apply']       = 'agentship/apply';
+$route['support']               = 'support/index';
 
 /* -----------------------------------------------------------------
  | Agent panel  -> application/controllers/agent/
@@ -84,6 +85,9 @@ $route['admin/agent-applications/(:any)/(:num)/(:any)'] = 'admin/agent_applicati
 $route['admin/agent-applications/(:any)/(:num)']        = 'admin/agent_applications/$1/$2';
 $route['admin/agent-applications/(:any)']               = 'admin/agent_applications/$1';
 $route['admin/agent-applications']                      = 'admin/agent_applications/index';
+$route['admin/support-links/(:any)/(:num)']   = 'admin/support_links/$1/$2';
+$route['admin/support-links/(:any)']         = 'admin/support_links/$1';
+$route['admin/support-links']                = 'admin/support_links/index';
 
 /* -----------------------------------------------------------------
  | API v1  -> application/controllers/api/V1.php

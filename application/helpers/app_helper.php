@@ -394,3 +394,129 @@ if ( ! function_exists('pager'))
 		return $html;
 	}
 }
+
+if ( ! function_exists('support_icon_choices'))
+{
+	/**
+	 * Icons the admin form offers for a support channel.
+	 *
+	 * lucide name => label. Every one of these is present in the bundled
+	 * assets/vendor/lucide build, so the list is what an admin can pick
+	 * without ending up with a blank square. The stored value is free text,
+	 * so a later lucide upgrade can be used by typing the new name.
+	 */
+	function support_icon_choices()
+	{
+		return array(
+			'mail'           => 'Email',
+			'phone'          => 'Phone',
+			'send'           => 'Telegram / paper plane',
+			'message-circle' => 'WhatsApp / chat bubble',
+			'message-square' => 'Discord / message',
+			'facebook'       => 'Facebook',
+			'instagram'      => 'Instagram',
+			'twitter'        => 'X (Twitter)',
+			'youtube'        => 'YouTube',
+			'linkedin'       => 'LinkedIn',
+			'music'          => 'TikTok / music',
+			'globe'          => 'Website',
+			'life-buoy'      => 'Support (generic)',
+			'headset'        => 'Live chat / headset',
+		);
+	}
+}
+
+if ( ! function_exists('support_channel_url'))
+{
+	/**
+	 * Turn a stored channel value into a safe href, or '' when it cannot be
+	 * one.
+	 *
+	 * The values come from an admin text box and end up in an `href`, so the
+	 * scheme is whitelisted here rather than trusted: anything that is not
+	 * http/https (`javascript:`, `data:`) is dropped even though the admin form
+	 * already rejects it on save. A bare domain is assumed to be https.
+	 */
+	function support_channel_url($kind, $value)
+	{
+		$value = trim((string) $value);
+
+		if ($value === '')
+		{
+			return '';
+		}
+
+		if ($kind === 'mailto')
+		{
+			return filter_var($value, FILTER_VALIDATE_EMAIL) ? 'mailto:'.$value : '';
+		}
+
+		if ($kind === 'tel')
+		{
+			// Keep only what a dialler can use, so a formatted number such as
+			// "+880 1700-000000" still produces a working tel: link.
+			$digits = preg_replace('/[^0-9+]/', '', $value);
+			return $digits !== '' ? 'tel:'.$digits : '';
+		}
+
+		if ( ! preg_match('~^[a-z][a-z0-9+.-]*://~i', $value))
+		{
+			$value = 'https://'.ltrim($value, '/');
+		}
+
+		$scheme = strtolower((string) parse_url($value, PHP_URL_SCHEME));
+
+		if ( ! in_array($scheme, array('http', 'https'), TRUE) || ! parse_url($value, PHP_URL_HOST))
+		{
+			return '';
+		}
+
+		return $value;
+	}
+}
+
+if ( ! function_exists('support_channels'))
+{
+	/**
+	 * Published support channels, ready to render.
+	 *
+	 * Rows come from `support_links`; a row whose value cannot become a safe
+	 * href is dropped here rather than in the view, so a half-configured panel
+	 * shows the channels that work instead of a row of dead links.
+	 *
+	 * @param  int|NULL $limit  cap for a compact placement such as the footer
+	 * @return array of rows with a `url` added
+	 */
+	function support_channels($limit = NULL)
+	{
+		$CI =& get_instance();
+
+		if ( ! isset($CI->support_link_model))
+		{
+			$CI->load->model('support_link_model');
+		}
+
+		$out = array();
+
+		foreach ($CI->support_link_model->active() as $row)
+		{
+			$row->url = support_channel_url($row->kind, $row->value);
+
+			if ($row->url === '')
+			{
+				continue;
+			}
+
+			$out[] = $row;
+
+			// Counted after the unusable rows are dropped, so a footer asking
+			// for four channels gets four working ones.
+			if ($limit !== NULL && count($out) >= (int) $limit)
+			{
+				break;
+			}
+		}
+
+		return $out;
+	}
+}

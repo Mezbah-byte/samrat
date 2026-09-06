@@ -313,5 +313,27 @@ $ring_pct = ($progress['required'] > 0)
         </div>
       <?php endif; ?>
     </div>
+
+    <?php if ( ! empty($support_links)): ?>
+    <div class="panel reveal" data-reveal-order="9">
+      <div class="panel-head">
+        <i data-lucide="life-buoy"></i> Support
+        <span class="spacer"></span>
+        <a href="<?php echo base_url('support'); ?>">All</a>
+      </div>
+      <div class="feed">
+        <?php foreach ($support_links as $c): ?>
+          <a class="feed-item" href="<?php echo html_escape($c->url); ?>"
+             <?php echo $c->kind === 'link' ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
+            <span class="icon-tile sm grad-primary"><i data-lucide="<?php echo html_escape($c->icon); ?>"></i></span>
+            <div class="feed-main">
+              <div class="feed-title text-truncate"><?php echo html_escape($c->label); ?></div>
+              <div class="feed-sub text-truncate"><?php echo html_escape($c->value); ?></div>
+            </div>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <?php endif; ?>
   </div>
 </div>

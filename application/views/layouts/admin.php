@@ -51,6 +51,7 @@
     <a class="nav-link <?php echo active_if($active_menu, 'ads'); ?>" href="<?php echo base_url('admin/ads'); ?>"><i class="bi bi-badge-ad"></i> Ads</a>
     <a class="nav-link <?php echo active_if($active_menu, 'notices'); ?>" href="<?php echo base_url('admin/notices'); ?>"><i class="bi bi-megaphone"></i> Notices</a>
     <a class="nav-link <?php echo active_if($active_menu, 'notifications'); ?>" href="<?php echo base_url('admin/notifications'); ?>"><i class="bi bi-bell"></i> Notifications</a>
+    <a class="nav-link <?php echo active_if($active_menu, 'support_links'); ?>" href="<?php echo base_url('admin/support-links'); ?>"><i class="bi bi-life-preserver"></i> Support Links</a>
   </nav>
 
   <div class="nav-section">System</div>

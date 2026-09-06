@@ -82,12 +82,15 @@ try { document.documentElement.setAttribute('data-theme', localStorage.getItem('
   <div class="container d-flex flex-wrap justify-content-between gap-3">
     <div>&copy; <?php echo date('Y'); ?> <?php echo html_escape($company_name); ?>. <?php echo html_escape(setting('footer_text', '')); ?></div>
     <div class="d-flex flex-wrap gap-3">
-      <?php if ($mail = setting('support_email')): ?>
-        <a href="mailto:<?php echo html_escape($mail); ?>"><i data-lucide="mail"></i> <?php echo html_escape($mail); ?></a>
-      <?php endif; ?>
-      <?php if ($tg = setting('support_telegram')): ?>
-        <a href="<?php echo html_escape($tg); ?>" target="_blank" rel="noopener"><i data-lucide="send"></i> Telegram</a>
-      <?php endif; ?>
+      <?php /* The same channels the Support page lists, capped so the footer
+               stays a footer. Admin -> Support Links is the only place they
+               are edited. */ ?>
+      <?php foreach (support_channels(4) as $c): ?>
+        <a href="<?php echo html_escape($c->url); ?>" <?php echo $c->kind === 'link' ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
+          <i data-lucide="<?php echo html_escape($c->icon); ?>"></i>
+          <?php echo html_escape($c->kind === 'link' ? $c->label : $c->value); ?>
+        </a>
+      <?php endforeach; ?>
     </div>
   </div>
 </footer>

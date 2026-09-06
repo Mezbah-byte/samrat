@@ -452,6 +452,37 @@ CREATE TABLE `settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
+-- Support links (the contact channels on the user Support page)
+--
+-- A table rather than settings rows: the list is open-ended. An admin adds
+-- whichever networks the business is actually on, orders them, and switches
+-- one off without a deploy - none of which a fixed set of settings keys can
+-- do.
+--
+-- `kind` decides how `value` becomes an href: mailto: for an address, tel:
+-- for a number, and a plain http/https link for everything else. It is
+-- validated on save and again before rendering, because the value ends up
+-- inside an anchor.
+-- ---------------------------------------------------------------------
+CREATE TABLE `support_links` (
+  `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `label`      VARCHAR(60) NOT NULL,
+  `kind`       ENUM('link','mailto','tel') NOT NULL DEFAULT 'link',
+  `value`      VARCHAR(255) NOT NULL,
+  `icon`       VARCHAR(40) NOT NULL DEFAULT 'life-buoy' COMMENT 'lucide icon name',
+  `note`       VARCHAR(160) DEFAULT NULL COMMENT 'optional one-line hint under the channel',
+  `sort_order` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `status`     ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  -- Two channels with the same name would be indistinguishable to the user,
+  -- and the unique key is what lets the upgrade script re-run safely.
+  UNIQUE KEY `uq_support_label` (`label`),
+  KEY `ix_support_status_sort` (`status`,`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
 -- Notifications (user_id NULL = broadcast)
 -- ---------------------------------------------------------------------
 CREATE TABLE `notifications` (
@@ -645,10 +676,8 @@ INSERT INTO `settings` (`key`,`value`,`group`,`type`,`label`,`sort_order`) VALUE
 ('logo','','general','image','Logo',3),
 ('favicon','','general','image','Favicon',4),
 ('currency_symbol','$','general','text','Currency Symbol',5),
-('support_email','support@samrat.test','general','text','Support Email',6),
-('support_telegram','','general','text','Telegram',7),
-('footer_text','All rights reserved.','general','text','Footer Text',8),
-('off_days','0','general','text','Weekly Off Days (0=Sun ... 6=Sat, comma separated)',9),
+('footer_text','All rights reserved.','general','text','Footer Text',6),
+('off_days','0','general','text','Weekly Off Days (0=Sun ... 6=Sat, comma separated)',7),
 ('withdrawal_fee_percent','5','finance','number','Withdrawal Fee (%)',1),
 ('withdrawal_enabled','1','finance','boolean','Withdrawals Enabled',3),
 ('deposit_enabled','1','finance','boolean','Deposits Enabled',4),
@@ -665,7 +694,16 @@ INSERT INTO `settings` (`key`,`value`,`group`,`type`,`label`,`sort_order`) VALUE
 ('maintenance_mode','0','system','boolean','Maintenance Mode',2),
 ('maintenance_message','We are performing scheduled maintenance. Please check back soon.','system','textarea','Maintenance Message',3),
 ('cron_secret','154a4e0b3f11be75ac04c70089e4c9f0','system','text','Cron Secret Key',4),
-('timezone','Asia/Dhaka','system','text','Timezone',5);
+('timezone','Asia/Dhaka','system','text','Timezone',5),
+-- Support centre. The channels themselves live in `support_links`; only the
+-- page-level copy is a setting. support_enabled = 0 removes the page entirely.
+('support_enabled','1','support','boolean','Support Page Enabled',1),
+('support_hours','','support','text','Support Hours (e.g. Sat-Thu, 10am-7pm)',2),
+('support_note','','support','textarea','Note Shown Above the Channels',3);
+
+-- One channel to start with, so a fresh install is not a dead Support page.
+INSERT INTO `support_links` (`label`,`kind`,`value`,`icon`,`note`,`sort_order`,`status`) VALUES
+('Email','mailto','support@samrat.test','mail','Replies within one business day.',1,'active');
 
 -- Starter ladder, seeded INACTIVE on purpose: nothing pays out until an admin
 -- has looked at the numbers and switched a tier on.

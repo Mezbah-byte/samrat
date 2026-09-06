@@ -20,6 +20,7 @@ $nav = array(
 		array('agentship',     'agentship',     'badge-check',      'Agentship'),
 		array('notifications', 'notifications', 'bell',             'Notifications', ! empty($unread_count) ? (int) $unread_count : 0, 'alert'),
 		array('notices',       'notices',       'megaphone',        'Notice Board'),
+		array('support',       'support',       'life-buoy',        'Support'),
 	),
 );
 
@@ -34,6 +35,15 @@ if (setting('team_bonus_enabled', '1') !== '1')
 {
 	$nav['Money'] = array_values(array_filter($nav['Money'], function ($l) {
 		return $l[0] !== 'team_bonus';
+	}));
+}
+
+$support_on = setting('support_enabled', '1') === '1';
+
+if ( ! $support_on)
+{
+	$nav['Account'] = array_values(array_filter($nav['Account'], function ($l) {
+		return $l[0] !== 'support';
 	}));
 }
 ?>
@@ -142,6 +152,9 @@ try { document.documentElement.setAttribute('data-theme', localStorage.getItem('
             <li><a class="dropdown-item" href="<?php echo base_url('profile'); ?>"><i data-lucide="user"></i> Profile</a></li>
             <li><a class="dropdown-item" href="<?php echo base_url('profile/password'); ?>"><i data-lucide="key-round"></i> Change Password</a></li>
             <li><a class="dropdown-item" href="<?php echo base_url('referral'); ?>"><i data-lucide="users"></i> Referral</a></li>
+            <?php if ($support_on): ?>
+              <li><a class="dropdown-item" href="<?php echo base_url('support'); ?>"><i data-lucide="life-buoy"></i> Support</a></li>
+            <?php endif; ?>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item text-bad" href="<?php echo base_url('logout'); ?>"><i data-lucide="log-out"></i> Logout</a></li>
           </ul>

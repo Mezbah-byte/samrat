@@ -45,6 +45,13 @@ class Dashboard extends User_Controller {
 			'plan_split'     => $this->plan_split($investments),
 			'notices'        => $this->notice_model->published(3),
 			'global_ads'     => $this->ad_model->global_ads(2),
+
+			// A shortcut to the support page, plus the first few channels so the
+			// card is useful on its own. Empty when the feature is off or when no
+			// admin has published a channel yet, and the view drops the card.
+			'support_links'  => setting('support_enabled', '1') === '1'
+				? support_channels(4)
+				: array(),
 		));
 	}
 
