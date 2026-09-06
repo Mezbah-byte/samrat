@@ -5,6 +5,8 @@ class Referrals extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('referrals.view');
+
 		$this->load->model(array('referral_model', 'referral_level_model'));
 
 		$per_page = 25;

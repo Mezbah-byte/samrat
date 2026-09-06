@@ -198,6 +198,14 @@ class Admin_Controller extends MY_Controller {
 	/** @var object logged-in admin row */
 	protected $admin;
 
+	/**
+	 * @var array|bool granted permission keys, or TRUE for a super admin.
+	 *
+	 * TRUE is a bypass sentinel, not a shorthand for "all keys": a super admin
+	 * stores no rows, so every check has to answer yes without consulting them.
+	 */
+	protected $admin_perms = array();
+
 	public function __construct()
 	{
 		parent::__construct();
@@ -222,11 +230,69 @@ class Admin_Controller extends MY_Controller {
 			redirect('admin/login');
 		}
 
+		$this->config->load('permissions', FALSE, TRUE);
+		$this->load->model('admin_permission_model');
+
+		$this->admin_perms = ($this->admin->role === 'super_admin')
+			? TRUE
+			: $this->admin_permission_model->for_admin($this->admin->id);
+
 		$this->view_data['admin']       = $this->admin;
+		$this->view_data['admin_perms'] = $this->admin_perms;
 		$this->view_data['admin_stats'] = $this->admin_model->sidebar_badges();
 	}
 
-	/** Hard gate for destructive / privileged screens. */
+	/**
+	 * Does the signed-in admin hold this capability?
+	 *
+	 * Public because the `admin_can()` view helper reaches it through
+	 * get_instance(); views must ask the same question the controllers do
+	 * rather than re-deriving it from the role.
+	 */
+	public function can($perm)
+	{
+		if ($this->admin_perms === TRUE)
+		{
+			return TRUE;
+		}
+
+		return in_array($perm, (array) $this->admin_perms, TRUE);
+	}
+
+	/** Does the admin hold at least one of these? For grouped screens. */
+	public function can_any($perms)
+	{
+		foreach ((array) $perms as $perm)
+		{
+			if ($this->can($perm))
+			{
+				return TRUE;
+			}
+		}
+
+		return FALSE;
+	}
+
+	/**
+	 * Hard gate for a screen or action.
+	 *
+	 * Bounces to the dashboard, which is deliberately ungated - gating it would
+	 * make this redirect loop for an account holding nothing.
+	 */
+	protected function require_perm($perm)
+	{
+		if ( ! $this->can($perm))
+		{
+			$this->session->set_flashdata('error', 'You do not have permission for that action.');
+			redirect('admin/dashboard');
+		}
+	}
+
+	/**
+	 * Identity gate, not a capability gate. Reserved for the few places where
+	 * the question really is "are you a super admin" - editing the permission
+	 * matrix itself, which no grant may confer.
+	 */
 	protected function require_role($roles)
 	{
 		$roles = (array) $roles;

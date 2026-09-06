@@ -12,6 +12,8 @@ class Deposits extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('deposits.view');
+
 		$per_page = 20;
 		$page     = max(1, (int) $this->input->get('page'));
 		$status   = $this->input->get('status', TRUE) ?: '';
@@ -34,6 +36,8 @@ class Deposits extends Admin_Controller {
 
 	public function view($id)
 	{
+		$this->require_perm('deposits.view');
+
 		$deposit = $this->deposit_model->find_detailed($id);
 
 		if ( ! $deposit)
@@ -54,6 +58,8 @@ class Deposits extends Admin_Controller {
 	 */
 	public function approve($id)
 	{
+		$this->require_perm('deposits.approve');
+
 		if ($this->input->method() !== 'post')
 		{
 			show_error('Method not allowed.', 405);
@@ -77,6 +83,8 @@ class Deposits extends Admin_Controller {
 
 	public function reject($id)
 	{
+		$this->require_perm('deposits.reject');
+
 		if ($this->input->method() !== 'post')
 		{
 			show_error('Method not allowed.', 405);

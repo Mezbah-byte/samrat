@@ -8,6 +8,8 @@ class Settings extends Admin_Controller {
 
 	public function index($group = 'general')
 	{
+		$this->require_perm('settings.view');
+
 		$groups = $this->setting_model->groups();
 
 		if ( ! in_array($group, $groups, TRUE))
@@ -31,7 +33,7 @@ class Settings extends Admin_Controller {
 
 	protected function save($group)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('settings.manage');
 
 		$rows   = $this->setting_model->by_group($group);
 		$posted = $this->input->post();
@@ -110,7 +112,7 @@ class Settings extends Admin_Controller {
 	/** Rotates the cron secret so an exposed URL can be invalidated. */
 	public function regenerate_cron_secret()
 	{
-		$this->require_role(array('super_admin'));
+		$this->require_perm('settings.cron_secret');
 
 		if ($this->input->method() !== 'post')
 		{

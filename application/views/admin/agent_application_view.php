@@ -25,6 +25,7 @@
       </div>
     </div>
 
+    <?php if (admin_can('agent_applications.nid')): ?>
     <div class="card">
       <div class="card-header"><i class="bi bi-person-badge"></i> NID Documents</div>
       <div class="card-body">
@@ -56,6 +57,7 @@
         </div>
       </div>
     </div>
+    <?php endif; ?>
   </div>
 
   <div class="col-lg-5">
@@ -107,7 +109,7 @@
             <?php endif; ?>
           </p>
         <?php else: ?>
-          <?php if ($admin->role === 'super_admin'): ?>
+          <?php if (admin_can('agent_applications.approve')): ?>
             <p class="text-muted small">
               Approving opens the agent create form prefilled from this application. The account is
               created &mdash; and this application marked approved &mdash; only when you save that form
@@ -117,9 +119,10 @@
               <button class="btn btn-success w-100"><i class="bi bi-check2-circle"></i> Approve and Create Agent</button>
             <?php echo form_close(); ?>
           <?php else: ?>
-            <div class="alert alert-secondary py-2 small">Only a super admin can approve an application.</div>
+            <div class="alert alert-secondary py-2 small">You do not have permission to approve an application.</div>
           <?php endif; ?>
 
+          <?php if (admin_can('agent_applications.reject')): ?>
           <?php echo form_open('admin/agent-applications/reject/'.$application->id); ?>
             <div class="mb-2">
               <label class="form-label">Reason <span class="text-danger">*</span></label>
@@ -130,6 +133,7 @@
               <i class="bi bi-x-circle"></i> Reject
             </button>
           <?php echo form_close(); ?>
+          <?php endif; ?>
         <?php endif; ?>
       </div>
     </div>

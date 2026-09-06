@@ -321,6 +321,32 @@ if ( ! function_exists('short_txt'))
 	}
 }
 
+if ( ! function_exists('admin_can'))
+{
+	/**
+	 * Does the signed-in admin hold this capability?
+	 *
+	 * Views ask the controller rather than re-reading the role, so a hidden
+	 * button and a blocked request can never disagree. FALSE outside the admin
+	 * panel, which makes it safe in a partial shared with the public layouts.
+	 */
+	function admin_can($perm)
+	{
+		$CI =& get_instance();
+		return method_exists($CI, 'can') ? $CI->can($perm) : FALSE;
+	}
+}
+
+if ( ! function_exists('admin_can_any'))
+{
+	/** TRUE when the admin holds at least one of the given permissions. */
+	function admin_can_any($perms)
+	{
+		$CI =& get_instance();
+		return method_exists($CI, 'can_any') ? $CI->can_any($perms) : FALSE;
+	}
+}
+
 if ( ! function_exists('active_if'))
 {
 	function active_if($current, $name, $class = 'active')

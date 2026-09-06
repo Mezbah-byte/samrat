@@ -1,4 +1,5 @@
 <div class="row g-3">
+  <?php if (admin_can('notifications.send')): ?>
   <div class="col-lg-5">
     <div class="card">
       <div class="card-header"><i class="bi bi-send"></i> Send Notification</div>
@@ -40,8 +41,9 @@
       </div>
     </div>
   </div>
+  <?php endif; ?>
 
-  <div class="col-lg-7">
+  <div class="<?php echo admin_can('notifications.send') ? 'col-lg-7' : 'col-12'; ?>">
     <div class="card">
       <div class="card-header"><i class="bi bi-bell"></i> Sent Notifications</div>
       <?php if (empty($rows)): ?>

@@ -77,9 +77,13 @@
               <input type="file" name="nid_front" class="form-control" accept="image/*" <?php echo ($mode === 'create' && ! $application) ? 'required' : ''; ?>>
               <div class="form-text">JPG, PNG, GIF or WEBP, up to 4 MB.</div>
               <?php if ($mode === 'edit' && $a->nid_front): ?>
+                <?php if (admin_can('agents.nid')): ?>
                 <a href="<?php echo base_url('admin/agents/nid/'.$a->id.'/front'); ?>" target="_blank" rel="noopener" class="d-inline-block mt-2">
                   <img src="<?php echo base_url('admin/agents/nid/'.$a->id.'/front'); ?>" alt="NID front" class="img-thumbnail" style="max-height:120px">
                 </a>
+                <?php else: ?>
+                  <div class="form-text">A document is on file. You do not have permission to view it.</div>
+                <?php endif; ?>
               <?php endif; ?>
             </div>
             <div class="col-md-6">
@@ -89,9 +93,13 @@
               <input type="file" name="nid_back" class="form-control" accept="image/*" <?php echo ($mode === 'create' && ! $application) ? 'required' : ''; ?>>
               <div class="form-text">JPG, PNG, GIF or WEBP, up to 4 MB.</div>
               <?php if ($mode === 'edit' && $a->nid_back): ?>
+                <?php if (admin_can('agents.nid')): ?>
                 <a href="<?php echo base_url('admin/agents/nid/'.$a->id.'/back'); ?>" target="_blank" rel="noopener" class="d-inline-block mt-2">
                   <img src="<?php echo base_url('admin/agents/nid/'.$a->id.'/back'); ?>" alt="NID back" class="img-thumbnail" style="max-height:120px">
                 </a>
+                <?php else: ?>
+                  <div class="form-text">A document is on file. You do not have permission to view it.</div>
+                <?php endif; ?>
               <?php endif; ?>
             </div>
 

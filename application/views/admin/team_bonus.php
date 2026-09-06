@@ -48,7 +48,8 @@ $unlocked_all = array_sum(array_column($stats, 'unlocked'));
   </div>
 <?php endif; ?>
 
-<?php echo form_open('admin/team-bonus'); ?>
+<?php $can_edit = admin_can('team_bonus.manage'); ?>
+<?php echo form_open('admin/team-bonus', array('id' => 'tierForm')); ?>
 <div class="card mb-3">
   <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
     <span><i class="bi bi-trophy"></i> Bonus Tiers</span>
@@ -133,12 +134,14 @@ $unlocked_all = array_sum(array_column($stats, 'unlocked'));
             </div>
           </td>
           <td class="text-end">
+            <?php if ($can_edit): ?>
             <button type="submit" class="btn btn-sm btn-ghost text-danger"
                     formaction="<?php echo base_url('admin/team-bonus/delete/'.$id); ?>"
                     formnovalidate
                     title="Remove this tier">
               <i class="bi bi-trash"></i>
             </button>
+            <?php endif; ?>
           </td>
         </tr>
       <?php endforeach; ?>
@@ -148,15 +151,19 @@ $unlocked_all = array_sum(array_column($stats, 'unlocked'));
 
   <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div class="d-flex gap-2">
+      <?php if ($can_edit): ?>
       <button type="submit" class="btn btn-sm btn-outline-secondary"
               formaction="<?php echo base_url('admin/team-bonus/add'); ?>" formnovalidate>
         <i class="bi bi-plus-lg"></i> Add tier
       </button>
+      <?php endif; ?>
+      <?php if (admin_can('team_bonus.recompute')): ?>
       <button type="submit" class="btn btn-sm btn-outline-secondary"
               formaction="<?php echo base_url('admin/team-bonus/recompute'); ?>" formnovalidate
               title="Rebuild every user's team volume from the approved deposits">
         <i class="bi bi-arrow-repeat"></i> Recompute counters
       </button>
+      <?php endif; ?>
     </div>
     <span class="small text-muted">Set a target or bonus to 0, or switch a tier off, to stop it unlocking; its history stays.</span>
   </div>
@@ -188,11 +195,23 @@ $unlocked_all = array_sum(array_column($stats, 'unlocked'));
       </label>
     </div>
   </div>
+  <?php if ($can_edit): ?>
   <div class="card-footer text-end">
     <button class="btn btn-primary"><i class="bi bi-check2"></i> Save ladder</button>
   </div>
+  <?php endif; ?>
 </div>
 <?php echo form_close(); ?>
+
+<?php if ( ! $can_edit): ?>
+<script>
+(function () {
+  var form = document.getElementById('tierForm');
+  if (!form) return;
+  form.querySelectorAll('input, select, textarea').forEach(function (el) { el.disabled = true; });
+})();
+</script>
+<?php endif; ?>
 
 <div class="card">
   <div class="card-header"><i class="bi bi-info-circle"></i> How it pays</div>

@@ -62,10 +62,12 @@
             </div>
           <?php endforeach; ?>
 
-          <button class="btn btn-primary"><i class="bi bi-check2"></i> Save <?php echo html_escape(ucfirst($group)); ?> Settings</button>
+          <?php if (admin_can('settings.manage')): ?>
+            <button class="btn btn-primary"><i class="bi bi-check2"></i> Save <?php echo html_escape(ucfirst($group)); ?> Settings</button>
+          <?php endif; ?>
         <?php echo form_close(); ?>
 
-        <?php if ($group === 'system' && $admin->role === 'super_admin'): ?>
+        <?php if ($group === 'system' && admin_can('settings.cron_secret')): ?>
           <hr>
           <h6 class="fw-semibold">Cron</h6>
           <p class="small text-muted">The secret key authorises the HTTP cron URL. Rotate it if the URL has been exposed.</p>

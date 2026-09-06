@@ -69,6 +69,7 @@
 </div>
 
 <div class="row g-3">
+  <?php if (admin_can('deposits.view')): ?>
   <div class="col-lg-6">
     <div class="card h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -98,6 +99,9 @@
     </div>
   </div>
 
+  <?php endif; ?>
+
+  <?php if (admin_can('withdrawals.view')): ?>
   <div class="col-lg-6">
     <div class="card h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -126,6 +130,7 @@
       <?php endif; ?>
     </div>
   </div>
+  <?php endif; ?>
 
   <div class="col-lg-7">
     <div class="card h-100">
@@ -165,6 +170,7 @@
       <?php endif; ?>
     </div>
 
+    <?php if (admin_can('settings.cron_secret')): ?>
     <div class="card">
       <div class="card-header"><i class="bi bi-clock"></i> Daily Cron</div>
       <div class="card-body">
@@ -181,5 +187,6 @@
         </div>
       </div>
     </div>
+    <?php endif; ?>
   </div>
 </div>

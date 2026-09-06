@@ -11,6 +11,8 @@ class Notifications extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('notifications.view');
+
 		if ($this->input->method() === 'post')
 		{
 			$this->send();
@@ -35,6 +37,8 @@ class Notifications extends Admin_Controller {
 
 	protected function send()
 	{
+		$this->require_perm('notifications.send');
+
 		$this->form_validation->set_rules('title', 'Title', 'required|trim|max_length[180]');
 		$this->form_validation->set_rules('message', 'Message', 'required|trim');
 		$this->form_validation->set_rules('audience', 'Audience', 'required|in_list[all,one]');

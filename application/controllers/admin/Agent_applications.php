@@ -18,7 +18,7 @@ class Agent_applications extends Admin_Controller {
 
 	public function index()
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('agent_applications.view');
 
 		$per_page = 20;
 		$page     = max(1, (int) $this->input->get('page'));
@@ -43,7 +43,7 @@ class Agent_applications extends Admin_Controller {
 
 	public function view($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('agent_applications.view');
 
 		$application = $this->agent_application_model->find_detailed($id);
 
@@ -72,7 +72,7 @@ class Agent_applications extends Admin_Controller {
 	 */
 	public function approve($id)
 	{
-		$this->require_role(array('super_admin'));
+		$this->require_perm('agent_applications.approve');
 
 		if ($this->input->method() !== 'post')
 		{
@@ -97,7 +97,7 @@ class Agent_applications extends Admin_Controller {
 
 	public function reject($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('agent_applications.reject');
 
 		if ($this->input->method() !== 'post')
 		{
@@ -153,7 +153,7 @@ class Agent_applications extends Admin_Controller {
 	 */
 	public function nid($id, $side = 'front')
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('agent_applications.nid');
 
 		$application = $this->agent_application_model->find($id);
 

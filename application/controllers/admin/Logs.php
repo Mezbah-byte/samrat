@@ -5,6 +5,8 @@ class Logs extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('logs.view');
+
 		$per_page = 30;
 		$page     = max(1, (int) $this->input->get('page'));
 		$search   = $this->input->get('q', TRUE) ?: '';

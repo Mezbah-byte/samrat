@@ -58,7 +58,8 @@
       </div>
     <?php endif; ?>
 
-    <?php if (in_array($withdrawal->status, array('pending', 'approved'), TRUE)): ?>
+    <?php $wd_actions = array('withdrawals.approve', 'withdrawals.mark_paid', 'withdrawals.reject'); ?>
+    <?php if (in_array($withdrawal->status, array('pending', 'approved'), TRUE) && admin_can_any($wd_actions)): ?>
       <div class="card mb-3">
         <div class="card-header"><i class="bi bi-check2-square"></i> Actions</div>
         <div class="card-body">
@@ -67,7 +68,7 @@
             Rejecting returns the full amount.
           </div>
 
-          <?php if ($withdrawal->status === 'pending'): ?>
+          <?php if ($withdrawal->status === 'pending' && admin_can('withdrawals.approve')): ?>
             <?php echo form_open('admin/withdrawals/approve/'.$withdrawal->id, array('class' => 'mb-3')); ?>
               <label class="form-label small">Note (optional)</label>
               <input type="text" name="admin_note" class="form-control form-control-sm mb-2" maxlength="500">
@@ -78,6 +79,7 @@
             <hr>
           <?php endif; ?>
 
+          <?php if (admin_can('withdrawals.mark_paid')): ?>
           <?php echo form_open('admin/withdrawals/mark_paid/'.$withdrawal->id, array('class' => 'mb-3')); ?>
             <label class="form-label small">Payout TXID <span class="text-danger">*</span></label>
             <input type="text" name="txid" class="form-control form-control-sm mono mb-2" maxlength="191" required
@@ -89,7 +91,9 @@
           <?php echo form_close(); ?>
 
           <hr>
+          <?php endif; ?>
 
+          <?php if (admin_can('withdrawals.reject')): ?>
           <?php echo form_open('admin/withdrawals/reject/'.$withdrawal->id); ?>
             <label class="form-label small">Rejection reason</label>
             <input type="text" name="admin_note" class="form-control form-control-sm mb-2" maxlength="500">
@@ -97,13 +101,18 @@
               <i class="bi bi-x-lg"></i> Reject &amp; Refund
             </button>
           <?php echo form_close(); ?>
+          <?php endif; ?>
         </div>
       </div>
     <?php else: ?>
       <div class="card">
         <div class="card-body text-center text-muted py-4">
           <i class="bi bi-lock fs-2 opacity-50"></i>
-          <p class="mb-0 mt-2 small">This request is <?php echo html_escape($withdrawal->status); ?> and can no longer be changed.</p>
+          <?php if (in_array($withdrawal->status, array('pending', 'approved'), TRUE)): ?>
+            <p class="mb-0 mt-2 small">This request is <?php echo html_escape($withdrawal->status); ?>. You do not have permission to act on it.</p>
+          <?php else: ?>
+            <p class="mb-0 mt-2 small">This request is <?php echo html_escape($withdrawal->status); ?> and can no longer be changed.</p>
+          <?php endif; ?>
         </div>
       </div>
     <?php endif; ?>

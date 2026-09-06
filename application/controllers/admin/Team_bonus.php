@@ -20,6 +20,8 @@ class Team_bonus extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('team_bonus.view');
+
 		if ($this->input->method() === 'post')
 		{
 			$this->save();
@@ -41,7 +43,7 @@ class Team_bonus extends Admin_Controller {
 	/** Names, targets, amounts, modes, on/off state and the two switches. */
 	protected function save()
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('team_bonus.manage');
 
 		$names   = (array) $this->input->post('name');
 		$targets = (array) $this->input->post('target_volume');
@@ -111,7 +113,7 @@ class Team_bonus extends Admin_Controller {
 	/** Appends a blank, inactive tier for the admin to fill in. */
 	public function add()
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('team_bonus.manage');
 
 		if ($this->input->method() !== 'post')
 		{
@@ -138,7 +140,7 @@ class Team_bonus extends Admin_Controller {
 	 */
 	public function delete($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('team_bonus.manage');
 
 		if ($this->input->method() !== 'post')
 		{
@@ -179,7 +181,7 @@ class Team_bonus extends Admin_Controller {
 	 */
 	public function recompute()
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('team_bonus.recompute');
 
 		if ($this->input->method() !== 'post')
 		{

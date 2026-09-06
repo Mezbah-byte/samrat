@@ -64,7 +64,7 @@
       </div>
     <?php endif; ?>
 
-    <?php if ($deposit->status === 'pending'): ?>
+    <?php if ($deposit->status === 'pending' && admin_can_any(array('deposits.approve', 'deposits.reject'))): ?>
       <div class="card">
         <div class="card-header"><i class="bi bi-check2-square"></i> Decision</div>
         <div class="card-body">
@@ -74,6 +74,7 @@
             <strong><?php echo money($deposit->amount); ?></strong>, activates the plan and pays any referral commission.
           </div>
 
+          <?php if (admin_can('deposits.approve')): ?>
           <?php echo form_open('admin/deposits/approve/'.$deposit->id, array('class' => 'mb-3')); ?>
             <label class="form-label small">Note (optional)</label>
             <input type="text" name="admin_note" class="form-control form-control-sm mb-2" maxlength="500">
@@ -83,7 +84,9 @@
           <?php echo form_close(); ?>
 
           <hr>
+          <?php endif; ?>
 
+          <?php if (admin_can('deposits.reject')): ?>
           <?php echo form_open('admin/deposits/reject/'.$deposit->id); ?>
             <label class="form-label small">Rejection reason</label>
             <input type="text" name="admin_note" class="form-control form-control-sm mb-2" maxlength="500" placeholder="e.g. transaction not found on chain">
@@ -91,6 +94,7 @@
               <i class="bi bi-x-lg"></i> Reject
             </button>
           <?php echo form_close(); ?>
+          <?php endif; ?>
         </div>
       </div>
     <?php endif; ?>

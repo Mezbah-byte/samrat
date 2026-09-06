@@ -5,6 +5,8 @@ class Transactions extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('transactions.view');
+
 		$this->load->model(array('transaction_model', 'withdrawal_model'));
 
 		$per_page = 25;

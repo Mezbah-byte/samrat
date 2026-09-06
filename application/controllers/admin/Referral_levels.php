@@ -19,6 +19,8 @@ class Referral_levels extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('referral_levels.view');
+
 		if ($this->input->method() === 'post')
 		{
 			$this->save();
@@ -40,7 +42,7 @@ class Referral_levels extends Admin_Controller {
 	/** Rates, on/off state and the two upline rules, all in one submit. */
 	protected function save()
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('referral_levels.manage');
 
 		$percents = (array) $this->input->post('percent');
 		$active   = (array) $this->input->post('active');
@@ -95,7 +97,7 @@ class Referral_levels extends Admin_Controller {
 	/** Appends the next generation so the ladder has no gaps. */
 	public function add()
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('referral_levels.manage');
 
 		if ($this->input->method() !== 'post')
 		{
@@ -123,7 +125,7 @@ class Referral_levels extends Admin_Controller {
 	 */
 	public function delete($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('referral_levels.manage');
 
 		if ($this->input->method() !== 'post')
 		{

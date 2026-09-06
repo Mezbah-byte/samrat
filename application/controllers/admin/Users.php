@@ -13,6 +13,8 @@ class Users extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('users.view');
+
 		$per_page = 20;
 		$page     = max(1, (int) $this->input->get('page'));
 		$status   = $this->input->get('status', TRUE) ?: '';
@@ -35,6 +37,8 @@ class Users extends Admin_Controller {
 
 	public function view($id)
 	{
+		$this->require_perm('users.view');
+
 		$user = $this->user_model->find($id);
 
 		if ( ! $user)
@@ -62,6 +66,8 @@ class Users extends Admin_Controller {
 
 	public function edit($id)
 	{
+		$this->require_perm('users.edit');
+
 		$user = $this->user_model->find($id);
 
 		if ( ! $user)
@@ -126,7 +132,7 @@ class Users extends Admin_Controller {
 	 */
 	public function adjust($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('users.adjust');
 
 		if ($this->input->method() !== 'post')
 		{
@@ -188,7 +194,7 @@ class Users extends Admin_Controller {
 
 	public function status($id, $status)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('users.status');
 
 		if ($this->input->method() !== 'post')
 		{

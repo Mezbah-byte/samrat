@@ -11,6 +11,8 @@ class Ads extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('ads.view');
+
 		$per_page = 20;
 		$page     = max(1, (int) $this->input->get('page'));
 		$result   = $this->ad_model->paginate($per_page, ($page - 1) * $per_page, array(),
@@ -47,6 +49,8 @@ class Ads extends Admin_Controller {
 
 	protected function form($ad, $mode)
 	{
+		$this->require_perm('ads.manage');
+
 		if ($this->input->method() === 'post')
 		{
 			$this->form_validation->set_rules('title', 'Title', 'required|trim|max_length[150]');
@@ -152,7 +156,7 @@ class Ads extends Admin_Controller {
 
 	public function delete($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('ads.manage');
 
 		if ($this->input->method() !== 'post')
 		{

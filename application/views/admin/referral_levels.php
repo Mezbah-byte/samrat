@@ -28,7 +28,8 @@
   </div>
 </div>
 
-<?php echo form_open('admin/referral-levels'); ?>
+<?php $can_edit = admin_can('referral_levels.manage'); ?>
+<?php echo form_open('admin/referral-levels', array('id' => 'ladderForm')); ?>
 <div class="card mb-3">
   <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
     <span><i class="bi bi-diagram-3"></i> Generations</span>
@@ -81,7 +82,7 @@
             <div class="small text-muted"><?php echo (int) $stats['deals']; ?> payouts</div>
           </td>
           <td class="text-end">
-            <?php if ($is_top && count($rows) > 1): ?>
+            <?php if ($is_top && count($rows) > 1 && $can_edit): ?>
               <button type="submit" class="btn btn-sm btn-ghost text-danger"
                       formaction="<?php echo base_url('admin/referral-levels/delete/'.(int) $r->id); ?>"
                       formnovalidate
@@ -97,10 +98,14 @@
   </div>
 
   <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <?php if ($can_edit): ?>
     <button type="submit" class="btn btn-sm btn-outline-secondary"
             formaction="<?php echo base_url('admin/referral-levels/add'); ?>" formnovalidate>
       <i class="bi bi-plus-lg"></i> Add generation
     </button>
+    <?php else: ?>
+    <span></span>
+    <?php endif; ?>
     <span class="small text-muted">Set a rate to 0 or switch a generation off to stop it paying; its history stays.</span>
   </div>
 </div>
@@ -128,11 +133,23 @@
       </label>
     </div>
   </div>
+  <?php if ($can_edit): ?>
   <div class="card-footer text-end">
     <button class="btn btn-primary"><i class="bi bi-check2"></i> Save ladder</button>
   </div>
+  <?php endif; ?>
 </div>
 <?php echo form_close(); ?>
+
+<?php if ( ! $can_edit): ?>
+<script>
+(function () {
+  var form = document.getElementById('ladderForm');
+  if (!form) return;
+  form.querySelectorAll('input, select, textarea').forEach(function (el) { el.disabled = true; });
+})();
+</script>
+<?php endif; ?>
 
 <div class="card">
   <div class="card-header"><i class="bi bi-info-circle"></i> How it pays</div>

@@ -11,6 +11,8 @@ class Investments extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('investments.view');
+
 		$per_page = 20;
 		$page     = max(1, (int) $this->input->get('page'));
 		$status   = $this->input->get('status', TRUE) ?: '';
@@ -33,6 +35,8 @@ class Investments extends Admin_Controller {
 
 	public function view($id)
 	{
+		$this->require_perm('investments.view');
+
 		$investment = $this->investment_model->find($id);
 
 		if ( ! $investment)
@@ -59,7 +63,7 @@ class Investments extends Admin_Controller {
 	 */
 	public function cancel($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('investments.cancel');
 
 		if ($this->input->method() !== 'post')
 		{

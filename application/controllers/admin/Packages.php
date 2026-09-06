@@ -11,6 +11,8 @@ class Packages extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('packages.view');
+
 		$this->render('admin/packages', array(
 			'page_title'  => 'Packages',
 			'active_menu' => 'packages',
@@ -37,6 +39,8 @@ class Packages extends Admin_Controller {
 
 	protected function form($package, $mode)
 	{
+		$this->require_perm('packages.manage');
+
 		if ($this->input->method() === 'post')
 		{
 			$this->form_validation->set_rules('name', 'Name', 'required|trim|max_length[80]');
@@ -106,7 +110,7 @@ class Packages extends Admin_Controller {
 
 	public function delete($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('packages.manage');
 
 		if ($this->input->method() !== 'post')
 		{

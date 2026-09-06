@@ -27,7 +27,7 @@
       </ul>
     </div>
 
-    <?php if ($i->status === 'active'): ?>
+    <?php if ($i->status === 'active' && admin_can('investments.cancel')): ?>
       <div class="card border-danger">
         <div class="card-header text-danger-emphasis bg-danger-subtle"><i class="bi bi-x-octagon"></i> Cancel Plan</div>
         <div class="card-body">

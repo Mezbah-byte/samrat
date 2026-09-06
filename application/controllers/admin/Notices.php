@@ -11,6 +11,8 @@ class Notices extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('notices.view');
+
 		$per_page = 20;
 		$page     = max(1, (int) $this->input->get('page'));
 		$search   = $this->input->get('q', TRUE) ?: '';
@@ -46,6 +48,8 @@ class Notices extends Admin_Controller {
 
 	protected function form($notice, $mode)
 	{
+		$this->require_perm('notices.manage');
+
 		if ($this->input->method() === 'post')
 		{
 			$this->form_validation->set_rules('title', 'Title', 'required|trim|max_length[180]');
@@ -115,7 +119,7 @@ class Notices extends Admin_Controller {
 
 	public function delete($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('notices.manage');
 
 		if ($this->input->method() !== 'post')
 		{

@@ -6,7 +6,9 @@
         <input type="search" name="q" class="form-control form-control-sm" placeholder="Search title" value="<?php echo html_escape($search); ?>">
         <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i></button>
       <?php echo form_close(); ?>
+      <?php if (admin_can('notices.manage')): ?>
       <a href="<?php echo base_url('admin/notices/create'); ?>" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> New Notice</a>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -30,10 +32,12 @@
             <td class="small text-muted text-nowrap"><?php echo fmt_date($n->published_at, 'd M Y'); ?></td>
             <td class="text-end text-nowrap">
               <a href="<?php echo base_url('notices/'.$n->slug); ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+              <?php if (admin_can('notices.manage')): ?>
               <a href="<?php echo base_url('admin/notices/edit/'.$n->id); ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
               <?php echo form_open('admin/notices/delete/'.$n->id, array('class' => 'd-inline')); ?>
                 <button class="btn btn-sm btn-outline-danger" data-confirm="Delete this notice?"><i class="bi bi-trash"></i></button>
               <?php echo form_close(); ?>
+              <?php endif; ?>
             </td>
           </tr>
         <?php endforeach; ?>

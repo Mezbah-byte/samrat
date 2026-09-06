@@ -43,6 +43,18 @@ CREATE TABLE `admins` (
   UNIQUE KEY `uq_admins_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Per-account admin grants. `module.action` keys, catalogued in
+-- application/config/permissions.php. The role only seeds these; the rows
+-- decide access. A `super_admin` is authorised by bypass and stores no rows.
+CREATE TABLE `admin_permissions` (
+  `admin_id`   INT UNSIGNED NOT NULL,
+  `permission` VARCHAR(60) NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`admin_id`, `permission`),
+  CONSTRAINT `fk_admin_permissions_admin`
+    FOREIGN KEY (`admin_id`) REFERENCES `admins` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ---------------------------------------------------------------------
 -- Users
 -- ---------------------------------------------------------------------

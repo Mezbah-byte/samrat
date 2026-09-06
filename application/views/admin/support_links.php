@@ -15,7 +15,9 @@
 <div class="card">
   <div class="card-header d-flex justify-content-between align-items-center">
     <span><i class="bi bi-life-preserver"></i> Support Channels</span>
+    <?php if (admin_can('support_links.manage')): ?>
     <a href="<?php echo base_url('admin/support-links/create'); ?>" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Add Channel</a>
+    <?php endif; ?>
   </div>
 
   <?php if (empty($rows)): ?>
@@ -42,10 +44,12 @@
             <td class="small text-muted"><?php echo html_escape($r->note); ?></td>
             <td><?php echo badge($r->status); ?></td>
             <td class="text-end text-nowrap">
+              <?php if (admin_can('support_links.manage')): ?>
               <a href="<?php echo base_url('admin/support-links/edit/'.$r->id); ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
               <?php echo form_open('admin/support-links/delete/'.$r->id, array('class' => 'd-inline')); ?>
                 <button class="btn btn-sm btn-outline-danger" data-confirm="Delete the &quot;<?php echo html_escape($r->label); ?>&quot; channel?"><i class="bi bi-trash"></i></button>
               <?php echo form_close(); ?>
+              <?php endif; ?>
             </td>
           </tr>
         <?php endforeach; ?>

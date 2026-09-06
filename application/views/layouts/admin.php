@@ -22,46 +22,58 @@
     <a class="nav-link <?php echo active_if($active_menu, 'dashboard'); ?>" href="<?php echo base_url('admin/dashboard'); ?>"><i class="bi bi-speedometer2"></i> Dashboard</a>
   </nav>
 
+  <?php $ops = array('deposits.view', 'withdrawals.view', 'investments.view', 'transactions.view',
+                     'referrals.view', 'referral_levels.view', 'team_bonus.view'); ?>
+  <?php if (admin_can_any($ops)): ?>
   <div class="nav-section">Operations</div>
   <nav class="nav flex-column">
+    <?php if (admin_can('deposits.view')): ?>
     <a class="nav-link <?php echo active_if($active_menu, 'deposits'); ?>" href="<?php echo base_url('admin/deposits'); ?>">
       <i class="bi bi-inbox-fill"></i> Deposits
       <?php if ( ! empty($admin_stats['deposits'])): ?><span class="badge text-bg-warning ms-auto"><?php echo (int) $admin_stats['deposits']; ?></span><?php endif; ?>
     </a>
+    <?php endif; ?>
+    <?php if (admin_can('withdrawals.view')): ?>
     <a class="nav-link <?php echo active_if($active_menu, 'withdrawals'); ?>" href="<?php echo base_url('admin/withdrawals'); ?>">
       <i class="bi bi-cash-stack"></i> Withdrawals
       <?php if ( ! empty($admin_stats['withdrawals'])): ?><span class="badge text-bg-warning ms-auto"><?php echo (int) $admin_stats['withdrawals']; ?></span><?php endif; ?>
     </a>
-    <a class="nav-link <?php echo active_if($active_menu, 'investments'); ?>" href="<?php echo base_url('admin/investments'); ?>"><i class="bi bi-graph-up-arrow"></i> Investments</a>
-    <a class="nav-link <?php echo active_if($active_menu, 'transactions'); ?>" href="<?php echo base_url('admin/transactions'); ?>"><i class="bi bi-list-columns-reverse"></i> Transactions</a>
-    <a class="nav-link <?php echo active_if($active_menu, 'referrals'); ?>" href="<?php echo base_url('admin/referrals'); ?>"><i class="bi bi-diagram-3"></i> Referrals</a>
-    <a class="nav-link <?php echo active_if($active_menu, 'referral_levels'); ?>" href="<?php echo base_url('admin/referral-levels'); ?>"><i class="bi bi-bar-chart-steps"></i> Referral Levels</a>
-    <a class="nav-link <?php echo active_if($active_menu, 'team_bonus'); ?>" href="<?php echo base_url('admin/team-bonus'); ?>"><i class="bi bi-trophy"></i> Team Bonus</a>
+    <?php endif; ?>
+    <?php if (admin_can('investments.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'investments'); ?>" href="<?php echo base_url('admin/investments'); ?>"><i class="bi bi-graph-up-arrow"></i> Investments</a><?php endif; ?>
+    <?php if (admin_can('transactions.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'transactions'); ?>" href="<?php echo base_url('admin/transactions'); ?>"><i class="bi bi-list-columns-reverse"></i> Transactions</a><?php endif; ?>
+    <?php if (admin_can('referrals.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'referrals'); ?>" href="<?php echo base_url('admin/referrals'); ?>"><i class="bi bi-diagram-3"></i> Referrals</a><?php endif; ?>
+    <?php if (admin_can('referral_levels.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'referral_levels'); ?>" href="<?php echo base_url('admin/referral-levels'); ?>"><i class="bi bi-bar-chart-steps"></i> Referral Levels</a><?php endif; ?>
+    <?php if (admin_can('team_bonus.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'team_bonus'); ?>" href="<?php echo base_url('admin/team-bonus'); ?>"><i class="bi bi-trophy"></i> Team Bonus</a><?php endif; ?>
   </nav>
+  <?php endif; ?>
 
+  <?php $manage = array('users.view', 'agent_applications.view', 'packages.view', 'deposit_methods.view',
+                        'ads.view', 'notices.view', 'notifications.view', 'support_links.view'); ?>
+  <?php if (admin_can_any($manage)): ?>
   <div class="nav-section">Manage</div>
   <nav class="nav flex-column">
-    <a class="nav-link <?php echo active_if($active_menu, 'users'); ?>" href="<?php echo base_url('admin/users'); ?>"><i class="bi bi-people-fill"></i> Users</a>
+    <?php if (admin_can('users.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'users'); ?>" href="<?php echo base_url('admin/users'); ?>"><i class="bi bi-people-fill"></i> Users</a><?php endif; ?>
+    <?php if (admin_can('agent_applications.view')): ?>
     <a class="nav-link <?php echo active_if($active_menu, 'agent_applications'); ?>" href="<?php echo base_url('admin/agent-applications'); ?>">
       <i class="bi bi-clipboard-check"></i> Agentship
       <?php if ( ! empty($admin_stats['agent_applications'])): ?><span class="badge text-bg-warning ms-auto"><?php echo (int) $admin_stats['agent_applications']; ?></span><?php endif; ?>
     </a>
-    <a class="nav-link <?php echo active_if($active_menu, 'packages'); ?>" href="<?php echo base_url('admin/packages'); ?>"><i class="bi bi-box-seam"></i> Packages</a>
-    <a class="nav-link <?php echo active_if($active_menu, 'deposit_methods'); ?>" href="<?php echo base_url('admin/deposit-methods'); ?>"><i class="bi bi-wallet2"></i> Wallets</a>
-    <a class="nav-link <?php echo active_if($active_menu, 'ads'); ?>" href="<?php echo base_url('admin/ads'); ?>"><i class="bi bi-badge-ad"></i> Ads</a>
-    <a class="nav-link <?php echo active_if($active_menu, 'notices'); ?>" href="<?php echo base_url('admin/notices'); ?>"><i class="bi bi-megaphone"></i> Notices</a>
-    <a class="nav-link <?php echo active_if($active_menu, 'notifications'); ?>" href="<?php echo base_url('admin/notifications'); ?>"><i class="bi bi-bell"></i> Notifications</a>
-    <a class="nav-link <?php echo active_if($active_menu, 'support_links'); ?>" href="<?php echo base_url('admin/support-links'); ?>"><i class="bi bi-life-preserver"></i> Support Links</a>
+    <?php endif; ?>
+    <?php if (admin_can('packages.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'packages'); ?>" href="<?php echo base_url('admin/packages'); ?>"><i class="bi bi-box-seam"></i> Packages</a><?php endif; ?>
+    <?php if (admin_can('deposit_methods.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'deposit_methods'); ?>" href="<?php echo base_url('admin/deposit-methods'); ?>"><i class="bi bi-wallet2"></i> Wallets</a><?php endif; ?>
+    <?php if (admin_can('ads.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'ads'); ?>" href="<?php echo base_url('admin/ads'); ?>"><i class="bi bi-badge-ad"></i> Ads</a><?php endif; ?>
+    <?php if (admin_can('notices.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'notices'); ?>" href="<?php echo base_url('admin/notices'); ?>"><i class="bi bi-megaphone"></i> Notices</a><?php endif; ?>
+    <?php if (admin_can('notifications.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'notifications'); ?>" href="<?php echo base_url('admin/notifications'); ?>"><i class="bi bi-bell"></i> Notifications</a><?php endif; ?>
+    <?php if (admin_can('support_links.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'support_links'); ?>" href="<?php echo base_url('admin/support-links'); ?>"><i class="bi bi-life-preserver"></i> Support Links</a><?php endif; ?>
   </nav>
+  <?php endif; ?>
 
   <div class="nav-section">System</div>
   <nav class="nav flex-column">
-    <a class="nav-link <?php echo active_if($active_menu, 'settings'); ?>" href="<?php echo base_url('admin/settings'); ?>"><i class="bi bi-sliders"></i> Settings</a>
-    <?php if ($admin->role === 'super_admin'): ?>
-      <a class="nav-link <?php echo active_if($active_menu, 'admins'); ?>" href="<?php echo base_url('admin/admins'); ?>"><i class="bi bi-person-badge"></i> Admins</a>
-      <a class="nav-link <?php echo active_if($active_menu, 'agents'); ?>" href="<?php echo base_url('admin/agents'); ?>"><i class="bi bi-person-vcard"></i> Agents</a>
-    <?php endif; ?>
-    <a class="nav-link <?php echo active_if($active_menu, 'logs'); ?>" href="<?php echo base_url('admin/logs'); ?>"><i class="bi bi-clock-history"></i> Activity Log</a>
+    <?php if (admin_can('settings.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'settings'); ?>" href="<?php echo base_url('admin/settings'); ?>"><i class="bi bi-sliders"></i> Settings</a><?php endif; ?>
+    <?php if (admin_can('admins.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'admins'); ?>" href="<?php echo base_url('admin/admins'); ?>"><i class="bi bi-person-badge"></i> Admins</a><?php endif; ?>
+    <?php if (admin_can('agents.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'agents'); ?>" href="<?php echo base_url('admin/agents'); ?>"><i class="bi bi-person-vcard"></i> Agents</a><?php endif; ?>
+    <?php if (admin_can('logs.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'logs'); ?>" href="<?php echo base_url('admin/logs'); ?>"><i class="bi bi-clock-history"></i> Activity Log</a><?php endif; ?>
     <a class="nav-link" href="<?php echo base_url('admin/logout'); ?>"><i class="bi bi-box-arrow-right"></i> Logout</a>
   </nav>
   <div class="p-3"></div>

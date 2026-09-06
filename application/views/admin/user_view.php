@@ -1,17 +1,17 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <a href="<?php echo base_url('admin/users'); ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> All users</a>
   <div class="d-flex gap-2">
-    <?php if ($u->status === 'active'): ?>
+    <?php if ($u->status === 'active' && admin_can('users.impersonate')): ?>
       <?php echo form_open('admin/impersonate/user/'.$u->id, array('class' => 'm-0')); ?>
         <button class="btn btn-sm btn-warning" data-confirm="Sign in as this user? You will have full access to their account and every action you take is logged against your admin account."><i class="bi bi-incognito"></i> Login as user</button>
       <?php echo form_close(); ?>
     <?php endif; ?>
-    <?php if ($u->status !== 'active'): ?>
+    <?php if ($u->status !== 'active' && admin_can('users.status')): ?>
       <?php echo form_open('admin/users/status/'.$u->id.'/active', array('class' => 'm-0')); ?>
         <button class="btn btn-sm btn-success" data-confirm="Activate this account?"><i class="bi bi-check2"></i> Activate</button>
       <?php echo form_close(); ?>
     <?php endif; ?>
-    <?php if ($u->status !== 'blocked'): ?>
+    <?php if ($u->status !== 'blocked' && admin_can('users.status')): ?>
       <?php echo form_open('admin/users/status/'.$u->id.'/blocked', array('class' => 'm-0')); ?>
         <button class="btn btn-sm btn-danger" data-confirm="Block this account? The user will be signed out."><i class="bi bi-slash-circle"></i> Block</button>
       <?php echo form_close(); ?>
@@ -62,6 +62,7 @@
       </ul>
     </div>
 
+    <?php if (admin_can('users.adjust')): ?>
     <div class="card">
       <div class="card-header"><i class="bi bi-sliders"></i> Adjust Balance</div>
       <div class="card-body">
@@ -89,9 +90,11 @@
         <?php echo form_close(); ?>
       </div>
     </div>
+    <?php endif; ?>
   </div>
 
   <div class="col-lg-8">
+    <?php if (admin_can('users.edit')): ?>
     <div class="card mb-3">
       <div class="card-header"><i class="bi bi-pencil-square"></i> Edit Account</div>
       <div class="card-body">
@@ -135,6 +138,7 @@
         <?php echo form_close(); ?>
       </div>
     </div>
+    <?php endif; ?>
 
     <ul class="nav nav-tabs" role="tablist">
       <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabPlans">Plans</button></li>

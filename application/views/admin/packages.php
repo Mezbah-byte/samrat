@@ -1,7 +1,9 @@
 <div class="card">
   <div class="card-header d-flex justify-content-between align-items-center">
     <span><i class="bi bi-box-seam"></i> Packages</span>
+    <?php if (admin_can('packages.manage')): ?>
     <a href="<?php echo base_url('admin/packages/create'); ?>" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> New Package</a>
+    <?php endif; ?>
   </div>
 
   <?php if (empty($rows)): ?>
@@ -29,10 +31,12 @@
             <td class="text-end fw-semibold"><?php echo money((float) $p->price + $daily * (int) $p->duration_days); ?></td>
             <td><?php echo badge($p->status); ?></td>
             <td class="text-end text-nowrap">
+              <?php if (admin_can('packages.manage')): ?>
               <a href="<?php echo base_url('admin/packages/edit/'.$p->id); ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
               <?php echo form_open('admin/packages/delete/'.$p->id, array('class' => 'd-inline')); ?>
                 <button class="btn btn-sm btn-outline-danger" data-confirm="Delete this package? If it has linked deposits it will be deactivated instead."><i class="bi bi-trash"></i></button>
               <?php echo form_close(); ?>
+              <?php endif; ?>
             </td>
           </tr>
         <?php endforeach; ?>

@@ -54,7 +54,7 @@ class Impersonate extends Admin_Controller {
 	 */
 	protected function guard()
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('users.impersonate');
 
 		if ($this->input->method() !== 'post')
 		{

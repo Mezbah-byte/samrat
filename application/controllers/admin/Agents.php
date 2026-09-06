@@ -19,7 +19,7 @@ class Agents extends Admin_Controller {
 
 	public function index()
 	{
-		$this->require_role(array('super_admin'));
+		$this->require_perm('agents.view');
 
 		$per_page = 20;
 		$page     = max(1, (int) $this->input->get('page'));
@@ -49,7 +49,7 @@ class Agents extends Admin_Controller {
 	 */
 	public function create($application_id = 0)
 	{
-		$this->require_role(array('super_admin'));
+		$this->require_perm('agents.manage');
 
 		$row         = $this->blank();
 		$application = NULL;
@@ -77,7 +77,7 @@ class Agents extends Admin_Controller {
 
 	public function edit($id)
 	{
-		$this->require_role(array('super_admin'));
+		$this->require_perm('agents.manage');
 
 		$row = $this->agent_model->find($id);
 
@@ -288,7 +288,7 @@ class Agents extends Admin_Controller {
 
 	public function delete($id)
 	{
-		$this->require_role(array('super_admin'));
+		$this->require_perm('agents.manage');
 
 		if ($this->input->method() !== 'post')
 		{
@@ -327,7 +327,7 @@ class Agents extends Admin_Controller {
 	 */
 	public function nid($id, $side = 'front')
 	{
-		$this->require_role(array('super_admin'));
+		$this->require_perm('agents.nid');
 
 		$row = $this->agent_model->find($id);
 

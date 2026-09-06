@@ -12,6 +12,8 @@ class Withdrawals extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('withdrawals.view');
+
 		$per_page = 20;
 		$page     = max(1, (int) $this->input->get('page'));
 		$status   = $this->input->get('status', TRUE) ?: '';
@@ -34,6 +36,8 @@ class Withdrawals extends Admin_Controller {
 
 	public function view($id)
 	{
+		$this->require_perm('withdrawals.view');
+
 		$withdrawal = $this->withdrawal_model->find_detailed($id);
 
 		if ( ! $withdrawal)
@@ -51,6 +55,8 @@ class Withdrawals extends Admin_Controller {
 	/** Approve = cleared for payout. The money was already held on request. */
 	public function approve($id)
 	{
+		$this->require_perm('withdrawals.approve');
+
 		$row = $this->guard($id, array('pending'));
 
 		$this->withdrawal_model->update($id, array(
@@ -71,6 +77,8 @@ class Withdrawals extends Admin_Controller {
 	/** Records the on-chain TXID and closes the request. */
 	public function mark_paid($id)
 	{
+		$this->require_perm('withdrawals.mark_paid');
+
 		$row = $this->guard($id, array('pending', 'approved'));
 
 		$txid = $this->input->post('txid', TRUE);
@@ -103,6 +111,8 @@ class Withdrawals extends Admin_Controller {
 	 */
 	public function reject($id)
 	{
+		$this->require_perm('withdrawals.reject');
+
 		$row  = $this->guard($id, array('pending', 'approved'));
 		$note = $this->input->post('admin_note', TRUE);
 

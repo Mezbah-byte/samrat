@@ -11,7 +11,9 @@
         <input type="search" name="q" class="form-control form-control-sm" placeholder="Search title" value="<?php echo html_escape($search); ?>">
         <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i></button>
       <?php echo form_close(); ?>
+      <?php if (admin_can('ads.manage')): ?>
       <a href="<?php echo base_url('admin/ads/create'); ?>" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> New Ad</a>
+      <?php endif; ?>
     </div>
   </div>
 
@@ -59,10 +61,12 @@
             </td>
             <td><?php echo badge($a->status); ?></td>
             <td class="text-end text-nowrap">
+              <?php if (admin_can('ads.manage')): ?>
               <a href="<?php echo base_url('admin/ads/edit/'.$a->id); ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
               <?php echo form_open('admin/ads/delete/'.$a->id, array('class' => 'd-inline')); ?>
                 <button class="btn btn-sm btn-outline-danger" data-confirm="Delete this ad? Its view history will be removed too."><i class="bi bi-trash"></i></button>
               <?php echo form_close(); ?>
+              <?php endif; ?>
             </td>
           </tr>
         <?php endforeach; ?>

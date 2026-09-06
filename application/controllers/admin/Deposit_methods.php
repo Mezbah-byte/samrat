@@ -16,6 +16,8 @@ class Deposit_methods extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('deposit_methods.view');
+
 		$this->render('admin/deposit_methods', array(
 			'page_title'  => 'Deposit Wallets',
 			'active_menu' => 'deposit_methods',
@@ -42,6 +44,8 @@ class Deposit_methods extends Admin_Controller {
 
 	protected function form($row, $mode)
 	{
+		$this->require_perm('deposit_methods.manage');
+
 		if ($this->input->method() === 'post')
 		{
 			$this->form_validation->set_rules('name', 'Name', 'required|trim|max_length[80]');
@@ -111,7 +115,7 @@ class Deposit_methods extends Admin_Controller {
 
 	public function delete($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('deposit_methods.manage');
 
 		if ($this->input->method() !== 'post')
 		{

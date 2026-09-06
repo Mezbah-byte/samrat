@@ -18,6 +18,8 @@ class Support_links extends Admin_Controller {
 
 	public function index()
 	{
+		$this->require_perm('support_links.view');
+
 		$this->render('admin/support_links', array(
 			'page_title'  => 'Support Links',
 			'active_menu' => 'support_links',
@@ -45,6 +47,8 @@ class Support_links extends Admin_Controller {
 
 	protected function form($row, $mode)
 	{
+		$this->require_perm('support_links.manage');
+
 		if ($this->input->method() === 'post')
 		{
 			$this->form_validation->set_rules('label', 'Label', 'required|trim|max_length[60]');
@@ -117,7 +121,7 @@ class Support_links extends Admin_Controller {
 
 	public function delete($id)
 	{
-		$this->require_role(array('super_admin', 'admin'));
+		$this->require_perm('support_links.manage');
 
 		if ($this->input->method() !== 'post')
 		{
