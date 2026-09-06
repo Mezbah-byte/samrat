@@ -314,6 +314,18 @@ class Investment_lib {
 			return $this->ad_result(FALSE, 'You need an active plan before watching ads.', 0, $user_id);
 		}
 
+		// Quota reached: every further view pays nothing, so it is refused here
+		// rather than silently recorded. The plan check above runs first on
+		// purpose - a user with no plan has a required of 0 and would otherwise
+		// get this message instead of the accurate one.
+		$required       = $this->CI->investment_model->daily_ads_required($user_id);
+		$watched_before = $this->CI->ad_model->watched_count($user_id, $today);
+
+		if ($required > 0 && $watched_before >= $required)
+		{
+			return $this->ad_result(FALSE, "Today's quota is already complete. Come back tomorrow.", 0, $user_id);
+		}
+
 		$already = (int) $db->where('user_id', (int) $user_id)->where('ad_id', (int) $ad_id)
 			->where('view_date', $today)->count_all_results('ad_views');
 

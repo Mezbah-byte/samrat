@@ -19,8 +19,12 @@ class Ads extends User_Controller {
 		// No active plan means no quota, and register_ad_view would reject every
 		// view anyway - so there is nothing to offer. Listing ads here only ever
 		// invited people to watch them for nothing.
+		//
+		// The list is capped at the quota, never above it: an ad past the quota
+		// pays nothing and register_ad_view now refuses it, so offering extras
+		// only burned the user's watch time.
 		$ads = $required > 0
-			? $this->ad_model->daily_task_ads($required + 5)
+			? $this->ad_model->daily_task_ads($required)
 			: array();
 
 		$watched = $this->ad_model->watched_ids($this->user->id);

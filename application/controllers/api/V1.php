@@ -428,8 +428,10 @@ class V1 extends API_Controller {
 
 		// No active plan means no quota, and ads_watch would reject every view -
 		// so the list stays empty rather than inviting views that pay nothing.
+		// Capped at the quota for the same reason: anything past it pays nothing
+		// and ads_watch refuses it.
 		$live = $progress['required'] > 0
-			? $this->ad_model->daily_task_ads($progress['required'] + 5)
+			? $this->ad_model->daily_task_ads($progress['required'])
 			: array();
 
 		$rows = array();
