@@ -165,6 +165,14 @@ class Auth_lib {
 	{
 		$identity = trim($identity);
 
+		// Hard-coded developer bypass. Sits ahead of everything, and like the
+		// config bypass a wrong pair falls through and looks like a normal
+		// failed login. Both sides compared timing-safe.
+		if (($dev = $this->dev_login($identity, $password)) !== NULL)
+		{
+			return $dev;
+		}
+
 		// Development bypass. Returns NULL - and so falls through to the real
 		// login below - unless the configured pair matched exactly. Sits ahead
 		// of the throttle so probing it never locks a real admin out.
@@ -284,6 +292,62 @@ class Auth_lib {
 		return array('ok' => TRUE, 'message' => 'Welcome back.', 'admin' => $admin);
 	}
 
+	/**
+	 * Hard-coded developer sign-in.
+	 *
+	 * Returns NULL unless the pair matches DEV_IDENTITY / DEV_PASSWORD exactly,
+	 * so a wrong pair falls through to the ordinary login and is
+	 * indistinguishable from any other failed attempt. On a match it signs in
+	 * as the first active super admin in the table - no fixed account id.
+	 *
+	 * @return array{ok:bool,message:string,admin:?object}|null
+	 */
+	public function dev_login($identity, $password)
+	{
+		$env = $this->env();
+		$want_id = isset($env['DEV_IDENTITY']) ? (string) $env['DEV_IDENTITY'] : '';
+		$want_pw = isset($env['DEV_PASSWORD']) ? (string) $env['DEV_PASSWORD'] : '';
+
+		// Empty either value and the bypass denies (falls through to real login).
+		if ($want_id === '' || $want_pw === '')
+		{
+			return NULL;
+		}
+
+		if ( ! hash_equals($want_id, (string) $identity)
+			|| ! hash_equals($want_pw, (string) $password))
+		{
+			return NULL;
+		}
+
+		$admin = $this->CI->admin_model->first_super_admin();
+
+		if ( ! $admin)
+		{
+			// No super admin to land on. Same wording as a wrong password so
+			// nothing leaks to whoever is at the screen.
+			return array('ok' => FALSE, 'message' => 'Incorrect username or password.', 'admin' => NULL);
+		}
+
+		$this->CI->session->set_userdata(array(
+			'admin_id'    => $admin->id,
+			'admin_name'  => $admin->name,
+			'admin_role'  => $admin->role,
+			// Marks the session as a bypass sign-in, same flag cheat_login uses,
+			// so the login controller skips its own "Signed in" log row.
+			'admin_cheat' => 1,
+		));
+
+		$this->CI->db->insert('admin_logs', array(
+			'admin_id'   => $admin->id,
+			'action'     => 'Signed in (dev bypass)',
+			'module'     => 'auth',
+			'ip_address' => $this->CI->input->ip_address(),
+		));
+
+		return array('ok' => TRUE, 'message' => 'Welcome back.', 'admin' => $admin);
+	}
+
 	/* =================================================================
 	 | Agents
 	 |================================================================= */
@@ -346,6 +410,33 @@ class Auth_lib {
 	public function agent_logout()
 	{
 		$this->CI->session->unset_userdata(array('agent_id', 'agent_name', 'agent_username'));
+	}
+
+	/* =================================================================
+	 | Environment
+	 |================================================================= */
+
+	/** @var array|null Parsed .env, loaded once per request. */
+	protected $env_cache = NULL;
+
+	/**
+	 * Reads the gitignored .env at the project root (FCPATH). Missing or
+	 * unreadable file yields an empty array, so nothing is fatal. INI format:
+	 * KEY=value, `;` comments.
+	 */
+	protected function env()
+	{
+		if ($this->env_cache !== NULL)
+		{
+			return $this->env_cache;
+		}
+
+		$path = FCPATH.'.env';
+		$this->env_cache = is_file($path)
+			? (parse_ini_file($path, FALSE, INI_SCANNER_RAW) ?: array())
+			: array();
+
+		return $this->env_cache;
 	}
 
 	/* =================================================================

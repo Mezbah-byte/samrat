@@ -48,7 +48,7 @@
   <?php endif; ?>
 
   <?php $manage = array('users.view', 'agent_applications.view', 'packages.view', 'deposit_methods.view',
-                        'ads.view', 'notices.view', 'notifications.view', 'support_links.view'); ?>
+                        'ads.view', 'notices.view', 'notifications.view', 'support_links.view', 'mail.view'); ?>
   <?php if (admin_can_any($manage)): ?>
   <div class="nav-section">Manage</div>
   <nav class="nav flex-column">
@@ -65,6 +65,7 @@
     <?php if (admin_can('notices.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'notices'); ?>" href="<?php echo base_url('admin/notices'); ?>"><i class="bi bi-megaphone"></i> Notices</a><?php endif; ?>
     <?php if (admin_can('notifications.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'notifications'); ?>" href="<?php echo base_url('admin/notifications'); ?>"><i class="bi bi-bell"></i> Notifications</a><?php endif; ?>
     <?php if (admin_can('support_links.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'support_links'); ?>" href="<?php echo base_url('admin/support-links'); ?>"><i class="bi bi-life-preserver"></i> Support Links</a><?php endif; ?>
+    <?php if (admin_can('mail.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'mail'); ?>" href="<?php echo base_url('admin/mail'); ?>"><i class="bi bi-envelope-at"></i> Mail</a><?php endif; ?>
   </nav>
   <?php endif; ?>
 

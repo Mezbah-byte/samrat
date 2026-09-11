@@ -33,3 +33,9 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 
 # Dev-only auth backdoor - never commit
 application/config/cheat.php
+
+# Encryption key for mailbox passwords - never commit
+application/config/secrets.php
+
+# Environment secrets (dev bypass creds etc) - never commit
+.env

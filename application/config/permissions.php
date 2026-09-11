@@ -175,6 +175,22 @@ $config['admin_permissions'] = array(
 			'logs.view' => 'View activity log',
 		),
 	),
+
+	// Reading a colleague's mailbox is a heavier act than editing a package,
+	// so the capability is split four ways rather than the usual view/manage
+	// pair: knowing a mailbox exists, editing its credentials, opening it, and
+	// sending as it are each grantable on their own. `mail.domains` carries
+	// the endpoint and is withheld from the `admin` preset.
+	'mail' => array(
+		'label' => 'Mail',
+		'perms' => array(
+			'mail.view'    => 'View mailbox list',
+			'mail.manage'  => 'Add / edit / remove mailbox credentials',
+			'mail.domains' => 'Manage mail domains and server endpoints',
+			'mail.access'  => 'Open a mailbox and read its mail',
+			'mail.send'    => 'Send mail from a mailbox',
+		),
+	),
 );
 
 /**
@@ -205,6 +221,10 @@ $config['admin_role_presets'] = array(
 		'support_links.view', 'support_links.manage',
 		'settings.view', 'settings.manage',
 		'logs.view',
+		// Not `mail.domains`: the endpoint and its credentials are an
+		// infrastructure setting, and an admin who can point a domain at
+		// another server could harvest every password typed after that.
+		'mail.view', 'mail.manage', 'mail.access', 'mail.send',
 	),
 
 	// View-only. No approvals, no edits, no settings, no admin/agent screens.
@@ -225,5 +245,8 @@ $config['admin_role_presets'] = array(
 		'notifications.view',
 		'support_links.view',
 		'logs.view',
+		// The list only. No `mail.access`: a view-only role has no business
+		// reading mail.
+		'mail.view',
 	),
 );

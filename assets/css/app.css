@@ -192,3 +192,21 @@ a:hover { color: var(--brand-dark); text-decoration: underline; }
 
 .copy-field { display: flex; gap: .4rem; }
 .copy-field input { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; }
+
+/* ---------- mail ---------- */
+.mail-folders .mail-folder-nav { max-height: 60vh; overflow-y: auto; }
+.mail-folders .nav-link { padding-top: .35rem; padding-bottom: .35rem; font-size: .9rem; color: var(--ink); }
+.mail-folders .nav-link.active { background: var(--brand-soft); font-weight: 600; }
+
+/* An unread row has to be findable at a glance in a list of forty. */
+.mail-list tr.mail-unread td { font-weight: 600; }
+.mail-list tr.mail-unread { background: var(--brand-soft); }
+.mail-list td { padding-top: .5rem; padding-bottom: .5rem; }
+
+/* The body frame is sandboxed, so nothing inside can report its height and
+   nothing outside can measure it. A fixed viewport with its own scrollbar is
+   the honest version; the Taller button grows it. */
+.mail-body-wrap { background: #fff; }
+.mail-body-frame { display: block; width: 100%; height: 65vh; min-height: 320px; border: 0; }
+
+.mail-quoted { border-left: 3px solid var(--line); padding-left: .75rem; color: var(--ink-muted); }

@@ -88,6 +88,14 @@ $route['admin/agent-applications']                      = 'admin/agent_applicati
 $route['admin/support-links/(:any)/(:num)']   = 'admin/support_links/$1/$2';
 $route['admin/support-links/(:any)']         = 'admin/support_links/$1';
 $route['admin/support-links']                = 'admin/support_links/index';
+$route['admin/mail-domains/(:any)/(:num)']   = 'admin/mail_domains/$1/$2';
+$route['admin/mail-domains/(:any)']          = 'admin/mail_domains/$1';
+$route['admin/mail-domains']                 = 'admin/mail_domains/index';
+
+// admin/mail/* needs no rewriting - Mail.php maps straight onto it. The IMAP
+// folder is not in the path: folder names carry dots, spaces and non-ASCII,
+// none of which survive permitted_uri_chars, so every mail screen takes it as
+// a `?f=` query parameter instead.
 
 /* -----------------------------------------------------------------
  | API v1  -> application/controllers/api/V1.php

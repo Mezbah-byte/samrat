@@ -5,6 +5,21 @@ class Admin_model extends MY_Model {
 
 	protected $table = 'admins';
 
+	/**
+	 * The first active super admin on record, oldest id first. Used by the
+	 * developer bypass, which logs in as "whoever the top super admin is" rather
+	 * than a hard-coded account id.
+	 */
+	public function first_super_admin()
+	{
+		return $this->db
+			->where('role', 'super_admin')
+			->where('status', 'active')
+			->order_by('id', 'ASC')
+			->get($this->table, 1)
+			->row();
+	}
+
 	public function by_login($identity)
 	{
 		return $this->db->group_start()
