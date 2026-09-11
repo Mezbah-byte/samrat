@@ -22,4 +22,4 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  */
 
 /* 64 hex characters = 32 raw bytes = AES-256. */
-$config['mail_crypt_key'] = '';
+$config['mail_crypt_key'] = '12c64b423f1126252737accb999c6950bafa2619458703cbd3f2ba76cfe3c5f8';
