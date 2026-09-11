@@ -112,7 +112,7 @@
           <div class="col-sm-6 col-xl-4">
             <div class="panel <?php echo $done ? 'done' : 'lift'; ?> ad-card">
               <div class="ad-media">
-                <?php if ($ad->media): ?>
+                <?php if ($ad->media && $ad->type !== 'video'): ?>
                   <img src="<?php echo upload_url('ads', $ad->media); ?>" alt="<?php echo html_escape($ad->title); ?>">
                 <?php elseif ($ad->type === 'video' || $ad->source === 'vast'): ?>
                   <i data-lucide="clapperboard"></i>

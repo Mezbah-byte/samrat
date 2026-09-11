@@ -113,7 +113,11 @@ class Ads extends Admin_Controller {
 				if ( ! empty($_FILES['media']['name']))
 				{
 					$this->load->library('uploader_lib');
-					$file = $this->uploader_lib->image('media', 'ads');
+
+					// A "video" ad takes a video file; everything else an image.
+					$file = $data['type'] === 'video'
+						? $this->uploader_lib->video('media', 'ads')
+						: $this->uploader_lib->image('media', 'ads');
 
 					if ($file === FALSE)
 					{

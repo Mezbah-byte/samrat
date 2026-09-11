@@ -99,10 +99,15 @@
               </select>
             </div>
             <div class="col-12 src-upload">
-              <label class="form-label">Media Image</label>
-              <input type="file" name="media" class="form-control" accept="image/*">
+              <label class="form-label">Upload file</label>
+              <input type="file" name="media" class="form-control" accept="image/*,video/mp4,video/webm,video/ogg,video/quicktime">
+              <div class="form-text">Image (JPG/PNG/GIF/WEBP, max 4&nbsp;MB) or, with Type set to <strong>Video</strong>, a video file (MP4/WEBM/OGG/MOV, max 64&nbsp;MB). Uploaded file wins over Media URL.</div>
               <?php if ($a->media): ?>
-                <img src="<?php echo upload_url('ads', $a->media); ?>" class="mt-2 rounded" style="max-height:130px" alt="">
+                <?php if ($a->type === 'video'): ?>
+                  <video src="<?php echo upload_url('ads', $a->media); ?>" class="mt-2 rounded" style="max-height:160px" controls></video>
+                <?php else: ?>
+                  <img src="<?php echo upload_url('ads', $a->media); ?>" class="mt-2 rounded" style="max-height:130px" alt="">
+                <?php endif; ?>
               <?php endif; ?>
             </div>
           </div>
