@@ -308,8 +308,52 @@
       countdown(seconds, unlock);
     }
 
+    /**
+     * Pulls the 11-char video id out of any common YouTube URL, or NULL if the
+     * URL is not YouTube. Covers watch?v=, youtu.be/, /embed/ and /shorts/.
+     */
+    function youtubeId(url) {
+      if (!url) return null;
+      var m = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+      return m ? m[1] : null;
+    }
+
+    /**
+     * A YouTube clip, played in the privacy-friendly embed. Countdown gates the
+     * confirm, same courtesy as an uploaded video - the real gate is still
+     * server-side.
+     */
+    function playYouTube(id, seconds) {
+      stage.classList.remove('d-none');
+
+      var src = 'https://www.youtube-nocookie.com/embed/' + id +
+        '?autoplay=1&rel=0&modestbranding=1&playsinline=1';
+
+      var frame = document.createElement('iframe');
+      frame.className = 'ad-video';
+      frame.setAttribute('src', src);
+      frame.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
+      frame.setAttribute('allowfullscreen', '');
+      frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+      frame.style.width = '100%';
+      frame.style.aspectRatio = '16 / 9';
+      frame.style.border = '0';
+
+      stage.innerHTML = '<div class="ad-video-wrap"></div>';
+      stage.querySelector('.ad-video-wrap').appendChild(frame);
+
+      countdown(seconds, unlock);
+    }
+
     /** An uploaded or linked file. A video also has to finish. */
     function playFile(url, isVideo, seconds) {
+      // A YouTube link cannot play in a <video> element - it needs the embed.
+      var yt = isVideo ? youtubeId(url) : null;
+      if (yt) {
+        playYouTube(yt, seconds);
+        return;
+      }
+
       if (isVideo && url) {
         stage.classList.remove('d-none');
         stage.innerHTML = '<div class="ad-video-wrap"><video class="ad-video" src="'

@@ -53,7 +53,7 @@
             <div class="col-12 src-upload">
               <label class="form-label">Media URL</label>
               <input type="url" name="media_url" class="form-control" value="<?php echo set_value('media_url', $a->media_url); ?>" placeholder="https://cdn.example.com/spot.mp4">
-              <div class="form-text">Use this for a hosted video (set Type to <strong>Video</strong>) or a remote image. Leave empty if you upload a file below.</div>
+              <div class="form-text">Use this for a hosted video (set Type to <strong>Video</strong>) or a remote image. A <strong>YouTube</strong> link works too &mdash; set Type to Video and paste the watch, <code>youtu.be</code> or Shorts URL. Leave empty if you upload a file below.</div>
             </div>
 
             <div class="col-12 src-vast">
