@@ -18,8 +18,8 @@
               <th class="text-center">Duration</th>
               <th class="text-center">Daily Ads</th>
               <th class="text-end">Min. Withdraw</th>
-              <th class="text-end">Total Profit</th>
               <th class="text-end">Total Return</th>
+              <th class="text-end">Total Profit</th>
             </tr>
           </thead>
           <tbody>
