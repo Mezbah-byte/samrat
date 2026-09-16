@@ -35,6 +35,24 @@
       </div>
     </div>
   </div>
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card">
+      <div class="card-body">
+        <div class="stat-label">Float in Agent Hands</div>
+        <div class="stat-value"><?php echo money($stats['float']); ?></div>
+        <i class="bi bi-wallet2 stat-icon"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card">
+      <div class="card-body">
+        <div class="stat-label">Owed to Agents</div>
+        <div class="stat-value"><?php echo money($stats['owed']); ?></div>
+        <i class="bi bi-send stat-icon"></i>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="card">
@@ -61,12 +79,12 @@
       <thead>
         <tr>
           <th>#</th><th>Name</th><th>Username</th><th>Email</th>
-          <th>Linked User</th><th>Commission</th><th>Status</th><th>Last Login</th><th></th>
+          <th>Linked User</th><th>Wallets</th><th>Commission</th><th>Status</th><th>Last Login</th><th></th>
         </tr>
       </thead>
       <tbody>
       <?php if (empty($rows)): ?>
-        <tr><td colspan="9" class="text-center text-muted py-4">No agents yet.</td></tr>
+        <tr><td colspan="10" class="text-center text-muted py-4">No agents yet.</td></tr>
       <?php else: foreach ($rows as $a): ?>
         <tr>
           <td class="text-muted">#<?php echo (int) $a->id; ?></td>
@@ -80,10 +98,17 @@
               <span class="text-muted">Not linked</span>
             <?php endif; ?>
           </td>
+          <td class="small text-nowrap">
+            <span title="Deposit float"><i class="bi bi-wallet2 text-muted"></i> <?php echo money($a->deposit_balance); ?></span>
+            <div class="text-muted" style="font-size:.75rem">
+              collect <?php echo money($a->withdraw_balance); ?> &middot; comm <?php echo money($a->commission_balance); ?>
+            </div>
+          </td>
           <td class="small text-nowrap"><?php echo money($a->total_commission); ?></td>
           <td><?php echo badge($a->status); ?></td>
           <td class="small text-muted text-nowrap"><?php echo fmt_date($a->last_login_at, 'd M Y, H:i'); ?></td>
           <td class="text-end text-nowrap">
+            <a href="<?php echo base_url('admin/agents/wallets/'.$a->id); ?>" class="btn btn-sm btn-outline-secondary" title="Wallets &amp; ledger"><i class="bi bi-wallet2"></i></a>
             <?php if ($a->status === 'active' && admin_can('users.impersonate')): ?>
               <?php echo form_open('admin/impersonate/agent/'.$a->id, array('class' => 'd-inline')); ?>
                 <button class="btn btn-sm btn-outline-warning" title="Login as agent" data-confirm="Sign in as this agent? You will have full access to their panel and every action you take is logged against your admin account."><i class="bi bi-incognito"></i></button>

@@ -183,6 +183,13 @@ CREATE TABLE `deposits` (
   `agent_recommendation` ENUM('approve','reject') DEFAULT NULL,
   `agent_note`           VARCHAR(500) DEFAULT NULL,
   `agent_reviewed_at`    DATETIME DEFAULT NULL,
+  -- Float system. 'none' means no agent was involved: every deposit taken on
+  -- the admin route reads that way, which is what makes the two routes able
+  -- to run side by side.
+  `agent_wallet_id`      INT UNSIGNED DEFAULT NULL,
+  `agent_status`         ENUM('none','pending','accepted','rejected','expired') NOT NULL DEFAULT 'none',
+  `agent_accepted_at`    DATETIME DEFAULT NULL,
+  `agent_commission`     DECIMAL(18,8) NOT NULL DEFAULT 0,
   `created_at`        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -190,11 +197,13 @@ CREATE TABLE `deposits` (
   KEY `ix_deposits_user` (`user_id`,`status`),
   KEY `ix_deposits_status` (`status`,`created_at`),
   KEY `ix_deposits_agent` (`agent_id`),
+  KEY `ix_deposits_agent_status` (`agent_id`,`agent_status`),
   CONSTRAINT `fk_deposits_user`    FOREIGN KEY (`user_id`)    REFERENCES `users` (`id`)    ON DELETE CASCADE,
   CONSTRAINT `fk_deposits_package` FOREIGN KEY (`package_id`) REFERENCES `packages` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_deposits_method`  FOREIGN KEY (`deposit_method_id`) REFERENCES `deposit_methods` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_deposits_admin`   FOREIGN KEY (`reviewed_by`) REFERENCES `admins` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_deposits_agent`   FOREIGN KEY (`agent_id`)    REFERENCES `agents` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_deposits_agent`   FOREIGN KEY (`agent_id`)    REFERENCES `agents` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_deposits_agentwallet` FOREIGN KEY (`agent_wallet_id`) REFERENCES `agent_wallets` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
@@ -271,12 +280,20 @@ CREATE TABLE `withdrawals` (
   `agent_recommendation` ENUM('approve','reject') DEFAULT NULL,
   `agent_note`           VARCHAR(500) DEFAULT NULL,
   `agent_reviewed_at`    DATETIME DEFAULT NULL,
+  -- Float system. `agent_txid` is the hash of the payment the agent made to
+  -- the user out of their own pocket, distinct from `txid` above, which stays
+  -- the admin's own payout hash on the admin route.
+  `agent_status`         ENUM('none','pending','accepted','rejected','expired') NOT NULL DEFAULT 'none',
+  `agent_paid_at`        DATETIME DEFAULT NULL,
+  `agent_txid`           VARCHAR(191) DEFAULT NULL,
+  `agent_commission`     DECIMAL(18,8) NOT NULL DEFAULT 0,
   `created_at`     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `ix_wd_user` (`user_id`,`status`),
   KEY `ix_wd_status` (`status`,`created_at`),
   KEY `ix_wd_agent` (`agent_id`),
+  KEY `ix_wd_agent_status` (`agent_id`,`agent_status`),
   CONSTRAINT `fk_wd_user`  FOREIGN KEY (`user_id`)      REFERENCES `users` (`id`)  ON DELETE CASCADE,
   CONSTRAINT `fk_wd_admin` FOREIGN KEY (`processed_by`) REFERENCES `admins` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_wd_agent` FOREIGN KEY (`agent_id`)     REFERENCES `agents` (`id`) ON DELETE SET NULL
@@ -547,7 +564,16 @@ CREATE TABLE `agents` (
   `password`                   VARCHAR(255) NOT NULL,
   `commission_deposit_percent` DECIMAL(8,4) DEFAULT NULL COMMENT 'NULL = use the agent_deposit_percent setting',
   `commission_profit_percent`  DECIMAL(8,4) DEFAULT NULL COMMENT 'NULL = use the agent_profit_percent setting',
+  `commission_settle_percent`   DECIMAL(8,4) DEFAULT NULL COMMENT 'NULL = use the agent_deposit_commission_percent setting',
+  `commission_withdraw_percent` DECIMAL(8,4) DEFAULT NULL COMMENT 'NULL = use the agent_withdraw_commission_percent setting',
   `total_commission`           DECIMAL(18,8) NOT NULL DEFAULT 0,
+  -- The three float-system wallets. Only Agent_wallet_lib may write these,
+  -- and every write is mirrored into `agent_ledger` in the same transaction.
+  `deposit_balance`            DECIMAL(18,8) NOT NULL DEFAULT 0 COMMENT 'float bought from the admin',
+  `withdraw_balance`           DECIMAL(18,8) NOT NULL DEFAULT 0 COMMENT 'collected by paying user withdrawals',
+  `commission_balance`         DECIMAL(18,8) NOT NULL DEFAULT 0 COMMENT 'earnings awaiting cash-out or transfer',
+  `accepting_deposits`         TINYINT(1) NOT NULL DEFAULT 1,
+  `accepting_withdrawals`      TINYINT(1) NOT NULL DEFAULT 1,
   `status`                     ENUM('active','blocked') NOT NULL DEFAULT 'active',
   `created_by`                 INT UNSIGNED DEFAULT NULL,
   `last_login_at`              DATETIME DEFAULT NULL,
@@ -608,12 +634,13 @@ CREATE TABLE `agent_commissions` (
   `id`           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `agent_id`     INT UNSIGNED NOT NULL,
   `user_id`      INT UNSIGNED DEFAULT NULL COMMENT 'the team member whose activity earned this',
-  `source`       ENUM('deposit','daily_profit') NOT NULL,
-  `reference_id` INT UNSIGNED NOT NULL COMMENT 'deposits.id or daily_earnings.id',
+  `source`       ENUM('deposit','daily_profit','agent_deposit','agent_withdraw') NOT NULL,
+  `reference_id` INT UNSIGNED NOT NULL COMMENT 'deposits.id, daily_earnings.id or withdrawals.id',
   `base_amount`  DECIMAL(18,8) NOT NULL,
   `percent`      DECIMAL(8,4)  NOT NULL,
   `amount`       DECIMAL(18,8) NOT NULL,
   `settled`      TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = credited to a linked wallet',
+  `wallet`       ENUM('balance','commission') NOT NULL DEFAULT 'balance' COMMENT 'balance = the linked user (team accrual); commission = the agent wallet (float system)',
   `created_at`   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_agentcomm` (`agent_id`,`source`,`reference_id`),
@@ -638,6 +665,123 @@ CREATE TABLE `agent_logs` (
   PRIMARY KEY (`id`),
   KEY `ix_glog_agent` (`agent_id`,`created_at`),
   CONSTRAINT `fk_glog_agent` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- Agent receive wallets
+--
+-- The addresses a user is shown after picking an agent. Deliberately not
+-- folded into `deposit_methods`: those are the platform's own wallets, owned
+-- by the admin, and nothing an agent edits may ever appear in that list.
+-- ---------------------------------------------------------------------
+CREATE TABLE `agent_wallets` (
+  `id`             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `agent_id`       INT UNSIGNED NOT NULL,
+  `label`          VARCHAR(80)  NOT NULL COMMENT 'shown to the user, e.g. "Binance Pay"',
+  `network`        VARCHAR(30)  NOT NULL,
+  `currency`       VARCHAR(20)  NOT NULL DEFAULT 'USDT',
+  `wallet_address` VARCHAR(191) NOT NULL,
+  `qr_image`       VARCHAR(255) DEFAULT NULL,
+  `instructions`   TEXT DEFAULT NULL,
+  `min_amount`     DECIMAL(18,8) NOT NULL DEFAULT 0,
+  `max_amount`     DECIMAL(18,8) NOT NULL DEFAULT 0 COMMENT '0 = no ceiling',
+  `sort_order`     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `status`         ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at`     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `ix_agentwallet_agent` (`agent_id`,`status`,`sort_order`),
+  CONSTRAINT `fk_agentwallet_agent` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- Agent ledger
+--
+-- What `transactions` is for users, this is for agents: the one place every
+-- movement of an agent balance is recorded. Agent_wallet_lib writes a row
+-- here inside the same transaction as the balance UPDATE, so SUM(amount) per
+-- (agent_id, wallet) always equals the stored column.
+-- ---------------------------------------------------------------------
+CREATE TABLE `agent_ledger` (
+  `id`              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `agent_id`        INT UNSIGNED NOT NULL,
+  `wallet`          ENUM('deposit','withdraw','commission') NOT NULL,
+  `type`            ENUM('float_purchase','deposit_settle','deposit_refund','withdraw_settle',
+                         'withdraw_reverse','commission','payout','payout_refund',
+                         'transfer_in','transfer_out','admin_credit','admin_debit') NOT NULL,
+  `amount`          DECIMAL(18,8) NOT NULL COMMENT 'signed: + credit, - debit',
+  `balance_after`   DECIMAL(18,8) NOT NULL,
+  `reference_table` VARCHAR(40) DEFAULT NULL,
+  `reference_id`    INT UNSIGNED DEFAULT NULL,
+  `description`     VARCHAR(255) DEFAULT NULL,
+  `created_at`      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `ix_aledger_agent` (`agent_id`,`wallet`,`created_at`),
+  KEY `ix_aledger_type` (`type`,`created_at`),
+  KEY `ix_aledger_ref` (`reference_table`,`reference_id`),
+  CONSTRAINT `fk_aledger_agent` FOREIGN KEY (`agent_id`) REFERENCES `agents` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- Agent float orders (agent buys deposit balance from the admin)
+--
+-- Mirrors `deposits` from the other side. Float is sold at par - the agent's
+-- earnings come from the commission percentages, never from a purchase
+-- discount, so the ledger never has to reconcile two different values for the
+-- same dollar.
+-- ---------------------------------------------------------------------
+CREATE TABLE `agent_float_orders` (
+  `id`                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `agent_id`          INT UNSIGNED NOT NULL,
+  `deposit_method_id` INT UNSIGNED DEFAULT NULL,
+  `amount`            DECIMAL(18,8) NOT NULL,
+  `network`           VARCHAR(30) DEFAULT NULL,
+  `txid`              VARCHAR(191) NOT NULL,
+  `proof_image`       VARCHAR(255) DEFAULT NULL,
+  `status`            ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `admin_note`        VARCHAR(500) DEFAULT NULL,
+  `reviewed_by`       INT UNSIGNED DEFAULT NULL,
+  `reviewed_at`       DATETIME DEFAULT NULL,
+  `created_at`        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_floatorder_txid` (`txid`),
+  KEY `ix_floatorder_agent` (`agent_id`,`status`),
+  KEY `ix_floatorder_status` (`status`,`created_at`),
+  CONSTRAINT `fk_floatorder_agent`  FOREIGN KEY (`agent_id`)  REFERENCES `agents` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_floatorder_method` FOREIGN KEY (`deposit_method_id`) REFERENCES `deposit_methods` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_floatorder_admin`  FOREIGN KEY (`reviewed_by`) REFERENCES `admins` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- Agent payouts (agent cashes out from the admin)
+--
+-- `source` names which wallet is being drained. The amount is held - debited
+-- from that wallet - the moment the request is made, exactly as a user
+-- withdrawal holds the user's balance.
+-- ---------------------------------------------------------------------
+CREATE TABLE `agent_payouts` (
+  `id`             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `agent_id`       INT UNSIGNED NOT NULL,
+  `source`         ENUM('withdraw','commission') NOT NULL,
+  `amount`         DECIMAL(18,8) NOT NULL,
+  `fee_percent`    DECIMAL(8,4)  NOT NULL DEFAULT 0,
+  `fee`            DECIMAL(18,8) NOT NULL DEFAULT 0,
+  `net_amount`     DECIMAL(18,8) NOT NULL,
+  `network`        VARCHAR(30)  NOT NULL,
+  `wallet_address` VARCHAR(191) NOT NULL,
+  `status`         ENUM('pending','approved','rejected','paid') NOT NULL DEFAULT 'pending',
+  `txid`           VARCHAR(191) DEFAULT NULL,
+  `admin_note`     VARCHAR(500) DEFAULT NULL,
+  `processed_by`   INT UNSIGNED DEFAULT NULL,
+  `processed_at`   DATETIME DEFAULT NULL,
+  `created_at`     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `ix_apayout_agent` (`agent_id`,`status`),
+  KEY `ix_apayout_status` (`status`,`created_at`),
+  CONSTRAINT `fk_apayout_agent` FOREIGN KEY (`agent_id`)     REFERENCES `agents` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_apayout_admin` FOREIGN KEY (`processed_by`) REFERENCES `admins` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -702,6 +846,18 @@ INSERT INTO `settings` (`key`,`value`,`group`,`type`,`label`,`sort_order`) VALUE
 ('agent_team_depth','20','agent','number','Team Depth Limit (generations)',3),
 ('agent_deposit_percent','1','agent','number','Agent Commission on Team Deposits (%)',4),
 ('agent_profit_percent','0.5','agent','number','Agent Commission on Team Daily Profit (%)',5),
+-- Float system. The two route keys ship as 'admin', which is the pre-float
+-- behaviour: users pay the platform wallet and an admin approves. Moving them
+-- to 'both' or 'agent' is what turns the agent route on, and moving them back
+-- is the whole rollback.
+('agent_float_enabled','0','agent','boolean','Agent Float System Enabled',10),
+('deposit_route','admin','agent','text','Deposit Route (admin / agent / both)',11),
+('withdraw_route','admin','agent','text','Withdrawal Route (admin / agent / both)',12),
+('agent_deposit_commission_percent','1','agent','number','Agent Commission per Deposit Settled (%)',13),
+('agent_withdraw_commission_percent','1','agent','number','Agent Commission per Withdrawal Paid (%)',14),
+('agent_accept_timeout_hours','6','agent','number','Hours Before an Unanswered Request Escalates to Admin',15),
+('agent_payout_fee_percent','0','agent','number','Fee on Agent Cash-Out (%)',16),
+('agent_min_float','0','agent','number','Minimum Float an Agent Must Hold to Be Listed',17),
 ('registration_open','1','system','boolean','Registration Open',1),
 ('maintenance_mode','0','system','boolean','Maintenance Mode',2),
 ('maintenance_message','We are performing scheduled maintenance. Please check back soon.','system','textarea','Maintenance Message',3),

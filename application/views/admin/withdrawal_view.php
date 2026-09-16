@@ -40,6 +40,42 @@
   </div>
 
   <div class="col-lg-5">
+    <?php if ($withdrawal->agent_status !== 'none'): ?>
+      <div class="card mb-3">
+        <div class="card-header"><i class="bi bi-person-vcard"></i> Agent Route</div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Routed to</span>
+            <a href="<?php echo base_url('admin/agents/wallets/'.(int) $withdrawal->agent_id); ?>">
+              <?php echo html_escape($withdrawal->agent_username); ?> &middot; <?php echo html_escape($withdrawal->agent_name); ?>
+            </a>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Agent status</span>
+            <span>
+              <?php if ($withdrawal->agent_status === 'pending'): ?><span class="badge text-bg-warning">Waiting on agent</span>
+              <?php elseif ($withdrawal->agent_status === 'accepted'): ?><span class="badge text-bg-success">Paid by agent</span>
+              <?php elseif ($withdrawal->agent_status === 'expired'): ?><span class="badge text-bg-secondary">Timed out - escalated</span>
+              <?php else: ?><span class="badge text-bg-danger">Declined - escalated</span><?php endif; ?>
+            </span>
+          </li>
+          <?php if ($withdrawal->agent_txid): ?>
+            <li class="list-group-item"><div class="text-muted small mb-1">Agent's payout TXID</div><div class="mono small"><?php echo html_escape($withdrawal->agent_txid); ?></div></li>
+          <?php endif; ?>
+          <?php if ((float) $withdrawal->agent_commission > 0): ?>
+            <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Agent commission</span><strong><?php echo money($withdrawal->agent_commission); ?></strong></li>
+          <?php endif; ?>
+        </ul>
+        <?php if (in_array($withdrawal->agent_status, array('rejected', 'expired'), TRUE)): ?>
+          <div class="card-footer small text-warning-emphasis">
+            <i class="bi bi-exclamation-triangle"></i>
+            The agent did not pay this. The user's balance is still held, so approve and pay it
+            from the platform as normal, or reject to return the funds.
+          </div>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+
     <?php if ( ! empty($withdrawal->agent_recommendation)): ?>
       <div class="card mb-3">
         <div class="card-header"><i class="bi bi-person-vcard"></i> Agent Recommendation</div>

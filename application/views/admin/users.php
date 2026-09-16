@@ -11,7 +11,7 @@
     <?php echo form_open('admin/users', array('method' => 'get', 'class' => 'd-flex gap-2 m-0')); ?>
       <select name="status" class="form-select form-select-sm" data-autosubmit>
         <option value="">All statuses</option>
-        <?php foreach (array('active', 'pending', 'blocked') as $s): ?>
+        <?php foreach (array('active', 'inactive', 'pending', 'blocked') as $s): ?>
           <option value="<?php echo $s; ?>" <?php echo $status === $s ? 'selected' : ''; ?>><?php echo ucfirst($s); ?></option>
         <?php endforeach; ?>
       </select>
@@ -52,7 +52,7 @@
             <td class="text-end fw-semibold"><?php echo money($u->balance); ?></td>
             <td class="text-end"><?php echo money($u->total_deposit); ?></td>
             <td class="text-end text-success"><?php echo money($u->total_earned); ?></td>
-            <td><?php echo badge($u->status); ?></td>
+            <td><?php echo badge($u->status === 'active' && empty($u->has_active_package) ? 'inactive' : $u->status); ?></td>
             <td class="small text-muted text-nowrap"><?php echo fmt_date($u->created_at, 'd M y'); ?></td>
             <td class="text-end"><a href="<?php echo base_url('admin/users/view/'.$u->id); ?>" class="btn btn-sm btn-outline-primary">Manage</a></td>
           </tr>

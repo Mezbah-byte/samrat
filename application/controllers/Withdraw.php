@@ -13,10 +13,12 @@ class Withdraw extends User_Controller {
 	{
 		$fee_percent = (float) $this->setting_model->get('withdrawal_fee_percent', 5);
 		$floor       = $this->investment_model->withdraw_floor($this->user->id);
+		$route       = $this->route();
+		$agents      = in_array($route, array('agent', 'both'), TRUE) ? $this->available_agents() : array();
 
 		if ($this->input->method() === 'post')
 		{
-			$this->handle_request($fee_percent, $floor);
+			$this->handle_request($fee_percent, $floor, $route, $agents);
 		}
 
 		$this->render('user/withdraw', array(
@@ -27,10 +29,21 @@ class Withdraw extends User_Controller {
 			'enabled'      => $this->setting_model->get('withdrawal_enabled', '1') === '1',
 			'pending'      => $this->withdrawal_model->pending_count_for_user($this->user->id),
 			'recent'       => $this->withdrawal_model->for_user($this->user->id, 5)['rows'],
+			'route'        => $route,
+			'agents'       => $agents,
 		));
 	}
 
-	protected function handle_request($fee_percent, $floor)
+	/**
+	 * Places the request and holds the funds.
+	 *
+	 * Two routes, chosen by the `withdraw_route` setting: an admin pays from
+	 * the platform, or a chosen agent pays out of their own pocket and
+	 * collects the amount into their withdraw wallet afterwards. The hold on
+	 * the user's balance is identical either way - it happens here, at request
+	 * time, so the same balance cannot be requested twice.
+	 */
+	protected function handle_request($fee_percent, $floor, $route, $agents)
 	{
 		if ($this->setting_model->get('withdrawal_enabled', '1') !== '1')
 		{
@@ -48,6 +61,29 @@ class Withdraw extends User_Controller {
 
 		$amount = round((float) $this->input->post('amount'), MONEY_SCALE);
 		$wallet = $this->input->post('binance_id', TRUE);
+
+		// Which route this request takes. As on the deposit side, the setting
+		// decides what is on offer - not the posted field.
+		$via   = $this->input->post('pay_via', TRUE);
+		$agent = NULL;
+
+		if ($route === 'agent' || ($route === 'both' && $via === 'agent'))
+		{
+			if (empty($agents))
+			{
+				$this->session->set_flashdata('error', 'No agent is accepting withdrawals right now. Please try again shortly.');
+				redirect('withdraw');
+			}
+
+			$agent_id = (int) $this->input->post('agent_id');
+			$agent    = isset($agents[$agent_id]) ? $agents[$agent_id] : NULL;
+
+			if ( ! $agent)
+			{
+				$this->session->set_flashdata('error', 'Pick an agent to pay you.');
+				redirect('withdraw');
+			}
+		}
 
 		if ($floor <= 0)
 		{
@@ -84,10 +120,12 @@ class Withdraw extends User_Controller {
 			'network'        => WITHDRAW_NETWORK,
 			'wallet_address' => $wallet,
 			'status'         => 'pending',
+			'agent_id'       => $agent ? $agent->id : NULL,
+			'agent_status'   => $agent ? 'pending' : 'none',
 		));
 
 		// Funds are held the moment the request is made, so the same balance
-		// cannot be requested twice while an admin reviews it.
+		// cannot be requested twice while it is reviewed.
 		$this->wallet_lib->debit(
 			$this->user->id, $net, 'withdrawal',
 			'withdrawals', $withdrawal_id, 'Withdrawal request #'.$withdrawal_id
@@ -109,9 +147,68 @@ class Withdraw extends User_Controller {
 			redirect('withdraw');
 		}
 
-		$this->session->set_flashdata('success',
-			'Withdrawal requested. '.money($net).' will be sent after admin approval ('.money($fee).' fee deducted).');
+		if ($agent)
+		{
+			$this->notify_agent($agent, 'New withdrawal request',
+				money($net).' is waiting for you to send.', 'agent/requests/withdrawal/'.$withdrawal_id);
+
+			$this->session->set_flashdata('success',
+				'Withdrawal requested from '.$agent->username.'. '.money($net).' will be sent once they pay it'
+				.' ('.money($fee).' fee deducted).');
+		}
+		else
+		{
+			$this->session->set_flashdata('success',
+				'Withdrawal requested. '.money($net).' will be sent after admin approval ('.money($fee).' fee deducted).');
+		}
+
 		redirect('withdraw/history');
+	}
+
+	/* ---------------------------------------------------------------- */
+
+	/** Which routes are on offer right now. */
+	protected function route()
+	{
+		if ($this->setting_model->get('agent_float_enabled', '0') !== '1')
+		{
+			return 'admin';
+		}
+
+		$route = $this->setting_model->get('withdraw_route', 'admin');
+
+		return in_array($route, array('admin', 'agent', 'both'), TRUE) ? $route : 'admin';
+	}
+
+	/**
+	 * Agents taking withdrawal work, keyed by id.
+	 *
+	 * No float requirement: an agent pays a withdrawal from their own pocket
+	 * and collects it afterwards, so holding float has nothing to do with it.
+	 */
+	protected function available_agents()
+	{
+		$this->load->model('agent_model');
+
+		$out = array();
+
+		foreach ($this->agent_model->available_for_withdraw() as $agent)
+		{
+			$out[(int) $agent->id] = $agent;
+		}
+
+		return $out;
+	}
+
+	/** Agents read notifications through their linked user account, if any. */
+	protected function notify_agent($agent, $title, $body, $link)
+	{
+		$full = $this->agent_model->find($agent->id);
+
+		if ($full && $full->user_id)
+		{
+			$this->notification_model->push($full->user_id, $title, $body, $link);
+		}
 	}
 
 	public function history()

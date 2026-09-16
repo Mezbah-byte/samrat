@@ -46,6 +46,47 @@
       </ul>
     </div>
 
+    <?php if ($deposit->agent_status !== 'none'): ?>
+      <div class="card mb-3">
+        <div class="card-header"><i class="bi bi-person-vcard"></i> Agent Route</div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Routed to</span>
+            <a href="<?php echo base_url('admin/agents/wallets/'.(int) $deposit->agent_id); ?>">
+              <?php echo html_escape($deposit->agent_username); ?> &middot; <?php echo html_escape($deposit->agent_name); ?>
+            </a>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Agent float now</span><strong><?php echo money($deposit->agent_float); ?></strong>
+          </li>
+          <li class="list-group-item">
+            <div class="text-muted small mb-1">Agent wallet the user paid</div>
+            <div class="small"><?php echo html_escape($deposit->agent_wallet_label ?: 'Wallet removed'); ?></div>
+            <div class="mono small text-muted"><?php echo html_escape($deposit->agent_wallet_address ?: '-'); ?></div>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Agent status</span>
+            <span>
+              <?php if ($deposit->agent_status === 'pending'): ?><span class="badge text-bg-warning">Waiting on agent</span>
+              <?php elseif ($deposit->agent_status === 'accepted'): ?><span class="badge text-bg-success">Settled by agent</span>
+              <?php elseif ($deposit->agent_status === 'expired'): ?><span class="badge text-bg-secondary">Timed out - escalated</span>
+              <?php else: ?><span class="badge text-bg-danger">Declined - escalated</span><?php endif; ?>
+            </span>
+          </li>
+          <?php if ((float) $deposit->agent_commission > 0): ?>
+            <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Agent commission</span><strong><?php echo money($deposit->agent_commission); ?></strong></li>
+          <?php endif; ?>
+        </ul>
+        <?php if (in_array($deposit->agent_status, array('rejected', 'expired'), TRUE)): ?>
+          <div class="card-footer small text-warning-emphasis">
+            <i class="bi bi-exclamation-triangle"></i>
+            The user already sent money to the agent's address. Confirm who holds it before approving:
+            approving here credits the user from the platform, not from the agent's float.
+          </div>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+
     <?php if ( ! empty($deposit->agent_recommendation)): ?>
       <div class="card mb-3">
         <div class="card-header"><i class="bi bi-person-vcard"></i> Agent Recommendation</div>

@@ -18,7 +18,16 @@
             <div class="mb-3">
               <label class="form-label"><?php echo html_escape($row->label ?: $row->key); ?></label>
 
-              <?php if ($row->type === 'boolean'): ?>
+              <?php if (isset($enum_keys[$row->key])): ?>
+                <select name="<?php echo html_escape($row->key); ?>" class="form-select">
+                  <?php foreach ($enum_keys[$row->key] as $val => $label): ?>
+                    <option value="<?php echo html_escape($val); ?>" <?php echo $row->value === $val ? 'selected' : ''; ?>>
+                      <?php echo html_escape($label); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+
+              <?php elseif ($row->type === 'boolean'): ?>
                 <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" name="<?php echo html_escape($row->key); ?>"
                          id="set_<?php echo html_escape($row->key); ?>" value="1" <?php echo $row->value === '1' ? 'checked' : ''; ?>>
@@ -74,6 +83,14 @@
           <div class="copy-field mb-2">
             <input type="text" class="form-control form-control-sm" id="cronUrl" readonly value="<?php echo base_url('cron/run?key='.setting('cron_secret')); ?>">
             <button class="btn btn-sm btn-outline-secondary" type="button" data-copy-target="#cronUrl"><i class="bi bi-clipboard"></i></button>
+          </div>
+          <p class="small text-muted mt-2 mb-1">
+            Agent request timeouts. Schedule this one every 15 minutes if the float system is on;
+            the daily run above sweeps them too, just less promptly.
+          </p>
+          <div class="copy-field mb-2">
+            <input type="text" class="form-control form-control-sm" id="cronAgentUrl" readonly value="<?php echo base_url('cron/agent-timeouts?key='.setting('cron_secret')); ?>">
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-copy-target="#cronAgentUrl"><i class="bi bi-clipboard"></i></button>
           </div>
           <?php echo form_open('admin/settings/regenerate_cron_secret'); ?>
             <button class="btn btn-sm btn-outline-danger" data-confirm="Generate a new cron secret? Any scheduled task using the old URL will stop working.">

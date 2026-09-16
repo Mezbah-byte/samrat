@@ -24,6 +24,30 @@
     <a class="nav-link <?php echo active_if($active_menu, 'dashboard'); ?>" href="<?php echo base_url('agent/dashboard'); ?>"><i class="bi bi-speedometer2"></i> Dashboard</a>
   </nav>
 
+  <?php if ( ! empty($float_on)): ?>
+  <div class="nav-section">Money</div>
+  <nav class="nav flex-column">
+    <a class="nav-link <?php echo active_if($active_menu, 'req_deposits'); ?>" href="<?php echo base_url('agent/requests/deposits'); ?>">
+      <i class="bi bi-box-arrow-in-down"></i> Deposit Requests
+      <?php if ( ! empty($agent_stats['req_deposits'])): ?><span class="badge text-bg-warning ms-auto"><?php echo (int) $agent_stats['req_deposits']; ?></span><?php endif; ?>
+    </a>
+    <a class="nav-link <?php echo active_if($active_menu, 'req_withdrawals'); ?>" href="<?php echo base_url('agent/requests/withdrawals'); ?>">
+      <i class="bi bi-box-arrow-up-right"></i> Withdraw Requests
+      <?php if ( ! empty($agent_stats['req_withdrawals'])): ?><span class="badge text-bg-warning ms-auto"><?php echo (int) $agent_stats['req_withdrawals']; ?></span><?php endif; ?>
+    </a>
+    <a class="nav-link <?php echo active_if($active_menu, 'float'); ?>" href="<?php echo base_url('agent/float'); ?>">
+      <i class="bi bi-coin"></i> Buy Float
+      <?php if ( ! empty($agent_stats['float'])): ?><span class="badge text-bg-info ms-auto"><?php echo (int) $agent_stats['float']; ?></span><?php endif; ?>
+    </a>
+    <a class="nav-link <?php echo active_if($active_menu, 'payouts'); ?>" href="<?php echo base_url('agent/payouts'); ?>">
+      <i class="bi bi-send"></i> Cash Out
+      <?php if ( ! empty($agent_stats['payouts'])): ?><span class="badge text-bg-info ms-auto"><?php echo (int) $agent_stats['payouts']; ?></span><?php endif; ?>
+    </a>
+    <a class="nav-link <?php echo active_if($active_menu, 'wallets'); ?>" href="<?php echo base_url('agent/wallets'); ?>"><i class="bi bi-wallet2"></i> My Wallets</a>
+    <a class="nav-link <?php echo active_if($active_menu, 'ledger'); ?>" href="<?php echo base_url('agent/ledger'); ?>"><i class="bi bi-list-columns-reverse"></i> Wallet Ledger</a>
+  </nav>
+  <?php endif; ?>
+
   <div class="nav-section">My Team</div>
   <nav class="nav flex-column">
     <a class="nav-link <?php echo active_if($active_menu, 'team'); ?>" href="<?php echo base_url('agent/team'); ?>"><i class="bi bi-people-fill"></i> Members</a>

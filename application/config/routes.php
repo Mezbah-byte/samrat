@@ -59,6 +59,11 @@ $route['support']               = 'support/index';
 $route['agent']                 = 'agent/dashboard/index';
 $route['agent/login']           = 'agent/auth/login';
 $route['agent/logout']          = 'agent/auth/logout';
+/* Float system. `float` is a PHP reserved word and cannot name a class, so
+ | the pretty URL is mapped onto Float_orders by hand. */
+$route['agent/float/(:any)/(:num)'] = 'agent/float_orders/$1/$2';
+$route['agent/float/(:any)']        = 'agent/float_orders/$1';
+$route['agent/float']               = 'agent/float_orders/index';
 
 /* -----------------------------------------------------------------
  | Admin
@@ -81,6 +86,12 @@ $route['admin/referral-levels']              = 'admin/referral_levels/index';
 $route['admin/team-bonus/(:any)/(:num)']     = 'admin/team_bonus/$1/$2';
 $route['admin/team-bonus/(:any)']            = 'admin/team_bonus/$1';
 $route['admin/team-bonus']                   = 'admin/team_bonus/index';
+$route['admin/agent-float/(:any)/(:num)'] = 'admin/agent_float/$1/$2';
+$route['admin/agent-float/(:any)']        = 'admin/agent_float/$1';
+$route['admin/agent-float']               = 'admin/agent_float/index';
+$route['admin/agent-payouts/(:any)/(:num)'] = 'admin/agent_payouts/$1/$2';
+$route['admin/agent-payouts/(:any)']        = 'admin/agent_payouts/$1';
+$route['admin/agent-payouts']               = 'admin/agent_payouts/index';
 $route['admin/agent-applications/(:any)/(:num)/(:any)'] = 'admin/agent_applications/$1/$2/$3';
 $route['admin/agent-applications/(:any)/(:num)']        = 'admin/agent_applications/$1/$2';
 $route['admin/agent-applications/(:any)']               = 'admin/agent_applications/$1';
@@ -110,3 +121,4 @@ $route['api/v1/(:any)']          = 'api/v1/$1';
  | Cron
  | ----------------------------------------------------------------- */
 $route['cron/run']               = 'cron/run';
+$route['cron/agent-timeouts']    = 'cron/agent_timeouts';

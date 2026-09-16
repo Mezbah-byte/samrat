@@ -163,9 +163,36 @@ $config['admin_permissions'] = array(
 	'agents' => array(
 		'label' => 'Agents',
 		'perms' => array(
-			'agents.view'   => 'View agents',
-			'agents.manage' => 'Create / edit / delete agents',
-			'agents.nid'    => 'View agent NID documents',
+			'agents.view'           => 'View agents',
+			'agents.manage'         => 'Create / edit / delete agents',
+			'agents.nid'            => 'View agent NID documents',
+			// Writing an agent balance by hand is a money action, not an
+			// account edit, so it is grantable on its own - the same split
+			// `users.adjust` already makes against `users.edit`.
+			'agents.adjust_balance' => 'Credit / debit an agent wallet by hand',
+		),
+	),
+
+	// Float purchases: the agent buys deposit balance from the platform.
+	// Approving one mints float, so it sits beside deposits.approve in weight.
+	'agent_float' => array(
+		'label' => 'Agent Float Orders',
+		'perms' => array(
+			'agent_float.view'    => 'View float orders',
+			'agent_float.approve' => 'Approve float order',
+			'agent_float.reject'  => 'Reject float order',
+		),
+	),
+
+	// Agent cash-outs. Mirrors the withdrawals split, including the separate
+	// mark-paid step, because it is the same act against a different table.
+	'agent_payouts' => array(
+		'label' => 'Agent Payouts',
+		'perms' => array(
+			'agent_payouts.view'      => 'View agent payouts',
+			'agent_payouts.approve'   => 'Approve payout',
+			'agent_payouts.mark_paid' => 'Mark payout as paid',
+			'agent_payouts.reject'    => 'Reject payout',
 		),
 	),
 
@@ -204,6 +231,8 @@ $config['admin_role_presets'] = array(
 	'admin' => array(
 		'deposits.view', 'deposits.approve', 'deposits.reject',
 		'withdrawals.view', 'withdrawals.approve', 'withdrawals.mark_paid', 'withdrawals.reject',
+		'agent_float.view', 'agent_float.approve', 'agent_float.reject',
+		'agent_payouts.view', 'agent_payouts.approve', 'agent_payouts.mark_paid', 'agent_payouts.reject',
 		'investments.view', 'investments.cancel',
 		'transactions.view',
 		'referrals.view',
@@ -231,6 +260,8 @@ $config['admin_role_presets'] = array(
 	'moderator' => array(
 		'deposits.view',
 		'withdrawals.view',
+		'agent_float.view',
+		'agent_payouts.view',
 		'investments.view',
 		'transactions.view',
 		'referrals.view',

@@ -23,7 +23,8 @@
   </nav>
 
   <?php $ops = array('deposits.view', 'withdrawals.view', 'investments.view', 'transactions.view',
-                     'referrals.view', 'referral_levels.view', 'team_bonus.view'); ?>
+                     'referrals.view', 'referral_levels.view', 'team_bonus.view',
+                     'agent_float.view', 'agent_payouts.view'); ?>
   <?php if (admin_can_any($ops)): ?>
   <div class="nav-section">Operations</div>
   <nav class="nav flex-column">
@@ -37,6 +38,18 @@
     <a class="nav-link <?php echo active_if($active_menu, 'withdrawals'); ?>" href="<?php echo base_url('admin/withdrawals'); ?>">
       <i class="bi bi-cash-stack"></i> Withdrawals
       <?php if ( ! empty($admin_stats['withdrawals'])): ?><span class="badge text-bg-warning ms-auto"><?php echo (int) $admin_stats['withdrawals']; ?></span><?php endif; ?>
+    </a>
+    <?php endif; ?>
+    <?php if (admin_can('agent_float.view')): ?>
+    <a class="nav-link <?php echo active_if($active_menu, 'agent_float'); ?>" href="<?php echo base_url('admin/agent-float'); ?>">
+      <i class="bi bi-coin"></i> Agent Float
+      <?php if ( ! empty($admin_stats['agent_float'])): ?><span class="badge text-bg-warning ms-auto"><?php echo (int) $admin_stats['agent_float']; ?></span><?php endif; ?>
+    </a>
+    <?php endif; ?>
+    <?php if (admin_can('agent_payouts.view')): ?>
+    <a class="nav-link <?php echo active_if($active_menu, 'agent_payouts'); ?>" href="<?php echo base_url('admin/agent-payouts'); ?>">
+      <i class="bi bi-send"></i> Agent Payouts
+      <?php if ( ! empty($admin_stats['agent_payouts'])): ?><span class="badge text-bg-warning ms-auto"><?php echo (int) $admin_stats['agent_payouts']; ?></span><?php endif; ?>
     </a>
     <?php endif; ?>
     <?php if (admin_can('investments.view')): ?><a class="nav-link <?php echo active_if($active_menu, 'investments'); ?>" href="<?php echo base_url('admin/investments'); ?>"><i class="bi bi-graph-up-arrow"></i> Investments</a><?php endif; ?>

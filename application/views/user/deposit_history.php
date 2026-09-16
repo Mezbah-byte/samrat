@@ -14,7 +14,7 @@
       <table class="table">
         <thead>
           <tr><th>#</th><th>Package</th><th class="text-end">Amount</th><th>Network</th>
-              <th>TXID</th><th>Status</th><th>Note</th><th>Submitted</th></tr>
+              <th>TXID</th><th>Paid to</th><th>Status</th><th>Note</th><th>Submitted</th></tr>
         </thead>
         <tbody>
         <?php foreach ($rows as $d): ?>
@@ -24,6 +24,18 @@
             <td class="text-end num fw-semibold"><?php echo money($d->amount); ?></td>
             <td><span class="chip chip-mute"><?php echo html_escape($d->network); ?></span></td>
             <td class="mono" title="<?php echo html_escape($d->txid); ?>"><?php echo html_escape(short_txt($d->txid)); ?></td>
+            <td class="small">
+              <?php if ( ! empty($d->agent_username)): ?>
+                <span class="chip chip-info">Agent <?php echo html_escape($d->agent_username); ?></span>
+                <?php if ($d->agent_status === 'pending'): ?>
+                  <div class="text-muted" style="font-size:.75rem">awaiting confirmation</div>
+                <?php elseif (in_array($d->agent_status, array('rejected', 'expired'), TRUE)): ?>
+                  <div class="text-muted" style="font-size:.75rem">passed to support</div>
+                <?php endif; ?>
+              <?php else: ?>
+                <span class="text-muted">Company wallet</span>
+              <?php endif; ?>
+            </td>
             <td><?php echo chip($d->status); ?></td>
             <td class="small text-muted"><?php echo html_escape($d->admin_note ?: '-'); ?></td>
             <td class="small text-muted text-nowrap"><?php echo fmt_date($d->created_at, 'd M, H:i'); ?></td>

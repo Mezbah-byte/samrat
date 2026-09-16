@@ -22,7 +22,49 @@
             <a href="<?php echo base_url('packages'); ?>" class="btn btn-grad"><i data-lucide="box"></i> Browse Packages</a>
           </div>
         <?php else: ?>
-          <?php echo form_open('withdraw'); ?>
+          <?php
+            $has_agent = ! empty($agents);
+            $chosen    = set_value('pay_via', ($has_agent && $route === 'agent') ? 'agent' : 'admin');
+          ?>
+          <?php echo form_open('withdraw', array('id' => 'withdrawForm')); ?>
+            <?php if ($has_agent && $route === 'both'): ?>
+              <div class="mb-3">
+                <label class="form-label">Who pays you?</label>
+                <div class="d-flex gap-2 flex-wrap">
+                  <label class="btn btn-quiet flex-fill">
+                    <input type="radio" name="pay_via" value="admin" class="form-check-input me-2" <?php echo $chosen === 'admin' ? 'checked' : ''; ?>>
+                    The platform
+                  </label>
+                  <label class="btn btn-quiet flex-fill">
+                    <input type="radio" name="pay_via" value="agent" class="form-check-input me-2" <?php echo $chosen === 'agent' ? 'checked' : ''; ?>>
+                    An agent
+                  </label>
+                </div>
+              </div>
+            <?php elseif ($has_agent && $route === 'agent'): ?>
+              <input type="hidden" name="pay_via" value="agent">
+            <?php else: ?>
+              <input type="hidden" name="pay_via" value="admin">
+            <?php endif; ?>
+
+            <?php if ($has_agent): ?>
+              <div class="mb-3" id="agentPick" <?php echo $chosen !== 'agent' ? 'hidden' : ''; ?>>
+                <label class="form-label">Agent <span class="text-bad">*</span></label>
+                <select name="agent_id" class="form-select" id="agentSelect">
+                  <?php foreach ($agents as $a): ?>
+                    <option value="<?php echo (int) $a->id; ?>" <?php echo set_select('agent_id', $a->id); ?>>
+                      <?php echo html_escape($a->username); ?> &mdash; <?php echo html_escape($a->name); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+                <div class="form-text">This agent sends the payout to your Binance ID and confirms it here.</div>
+              </div>
+            <?php elseif ($route === 'agent'): ?>
+              <div class="alert alert-warning small">
+                No agent is accepting withdrawals right now. Please try again shortly.
+              </div>
+            <?php endif; ?>
+
             <div class="mb-3">
               <label class="form-label">Amount <span class="text-bad">*</span></label>
               <div class="input-group">
@@ -66,7 +108,12 @@
       <div class="panel-body small text-muted">
         <ol class="ps-3 mb-0 d-grid gap-2">
           <li>The requested amount is held from your balance right away.</li>
-          <li>An admin reviews the request and sends the payout to your Binance ID.</li>
+          <?php if ( ! empty($agents)): ?>
+            <li>Your chosen agent sends the payout to your Binance ID and confirms it.</li>
+            <li>If the agent does not respond in time, an admin takes the request over.</li>
+          <?php else: ?>
+            <li>An admin reviews the request and sends the payout to your Binance ID.</li>
+          <?php endif; ?>
           <li>Once paid, the transfer reference appears in your history.</li>
           <li>If a request is rejected, the full amount is returned to your balance.</li>
         </ol>
@@ -103,3 +150,30 @@
     </div>
   </div>
 </div>
+
+<?php if ( ! empty($agents) && $route === 'both'): ?>
+<script>
+// The agent select is only meaningful on the agent route, and a hidden
+// required field would block submit with no visible error.
+(function () {
+  var form  = document.getElementById('withdrawForm');
+  var pick  = document.getElementById('agentPick');
+  var field = document.getElementById('agentSelect');
+
+  if (!form || !pick || !field) { return; }
+
+  function apply() {
+    var picked = form.querySelector('input[name="pay_via"]:checked');
+    var agent  = picked && picked.value === 'agent';
+    pick.hidden    = !agent;
+    field.required = agent;
+  }
+
+  form.querySelectorAll('input[name="pay_via"]').forEach(function (el) {
+    el.addEventListener('change', apply);
+  });
+
+  apply();
+})();
+</script>
+<?php endif; ?>

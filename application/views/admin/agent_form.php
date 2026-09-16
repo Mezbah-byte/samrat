@@ -125,6 +125,45 @@
               </select>
             </div>
 
+            <div class="col-12"><hr class="my-1"><div class="small text-muted">Float system &mdash; what this agent earns per transaction they settle, and whether they are offered to users at all.</div></div>
+
+            <div class="col-md-4">
+              <label class="form-label">Per-Deposit Commission (%)</label>
+              <input type="number" step="0.0001" min="0" max="100" name="commission_settle_percent" class="form-control"
+                     value="<?php echo set_value('commission_settle_percent', $a->commission_settle_percent); ?>"
+                     placeholder="<?php echo html_escape(setting('agent_deposit_commission_percent', '1')); ?>">
+              <div class="form-text">Earned on deposits this agent settles. Blank = platform default.</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Per-Withdrawal Commission (%)</label>
+              <input type="number" step="0.0001" min="0" max="100" name="commission_withdraw_percent" class="form-control"
+                     value="<?php echo set_value('commission_withdraw_percent', $a->commission_withdraw_percent); ?>"
+                     placeholder="<?php echo html_escape(setting('agent_withdraw_commission_percent', '1')); ?>">
+              <div class="form-text">Blank = platform default.</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Accepting Work</label>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="accepting_deposits" id="acceptDep" value="1"
+                       <?php echo set_checkbox('accepting_deposits', '1', (bool) $a->accepting_deposits); ?>>
+                <label class="form-check-label small" for="acceptDep">Offer for deposits</label>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="accepting_withdrawals" id="acceptWd" value="1"
+                       <?php echo set_checkbox('accepting_withdrawals', '1', (bool) $a->accepting_withdrawals); ?>>
+                <label class="form-check-label small" for="acceptWd">Offer for withdrawals</label>
+              </div>
+            </div>
+
+            <?php if ($mode === 'edit'): ?>
+              <div class="col-12">
+                <a href="<?php echo base_url('admin/agents/wallets/'.$a->id); ?>" class="btn btn-sm btn-outline-secondary">
+                  <i class="bi bi-wallet2"></i> Wallets &amp; ledger
+                </a>
+                <span class="small text-muted ms-2">Balances are moved there, not here.</span>
+              </div>
+            <?php endif; ?>
+
             <div class="col-12">
               <label class="form-label">
                 Password <?php echo $mode === 'edit' ? '<span class="text-muted">(leave blank to keep current)</span>' : '<span class="text-danger">*</span>'; ?>

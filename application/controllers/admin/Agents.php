@@ -17,6 +17,127 @@ class Agents extends Admin_Controller {
 		$this->load->model(array('agent_model', 'agent_application_model', 'user_model'));
 	}
 
+	/**
+	 * The three float wallets for one agent: balances, ledger integrity, and
+	 * the manual adjustment form.
+	 *
+	 * Split off the edit screen on purpose. Editing an agent is an account
+	 * change; moving their balance is a money action, gated separately.
+	 */
+	public function wallets($id)
+	{
+		$this->require_perm('agents.view');
+
+		$agent = $this->agent_model->find($id);
+
+		if ( ! $agent)
+		{
+			show_404();
+		}
+
+		$this->load->library('agent_wallet_lib');
+		$this->load->model(array('agent_ledger_model', 'agent_float_order_model', 'agent_payout_model'));
+
+		$per_page = 20;
+		$page     = max(1, (int) $this->input->get('page'));
+		$wallet   = $this->input->get('wallet', TRUE) ?: '';
+
+		if ( ! in_array($wallet, Agent_wallet_lib::WALLETS, TRUE))
+		{
+			$wallet = '';
+		}
+
+		$ledger = $this->agent_ledger_model->for_agent($agent->id, $per_page, ($page - 1) * $per_page, $wallet);
+
+		$this->render('admin/agent_wallets', array(
+			'page_title'  => 'Wallets - '.$agent->username,
+			'active_menu' => 'agents',
+			'a'           => $agent,
+			'balances'    => $this->agent_wallet_lib->balances($agent->id),
+			'reconcile'   => $this->agent_wallet_lib->reconcile_all($agent->id),
+			'rows'        => $ledger['rows'],
+			'total'       => $ledger['total'],
+			'per_page'    => $per_page,
+			'page'        => $page,
+			'wallet'      => $wallet,
+			'pending_float'   => $this->agent_float_order_model->pending_count($agent->id),
+			'pending_payouts' => $this->agent_payout_model->pending_count($agent->id),
+		));
+	}
+
+	/**
+	 * Manual credit or debit against one agent wallet.
+	 *
+	 * The reason is mandatory and lands in both the ledger row and the admin
+	 * log, because a hand-written balance move is exactly the entry someone
+	 * will have to explain later.
+	 */
+	public function adjust($id)
+	{
+		$this->require_perm('agents.adjust_balance');
+
+		if ($this->input->method() !== 'post')
+		{
+			show_error('Method not allowed.', 405);
+		}
+
+		$agent = $this->agent_model->find($id);
+
+		if ( ! $agent)
+		{
+			show_404();
+		}
+
+		$this->load->library('agent_wallet_lib');
+
+		$wallet    = $this->input->post('wallet', TRUE);
+		$direction = $this->input->post('direction', TRUE);
+		$amount    = round((float) $this->input->post('amount'), MONEY_SCALE);
+		$reason    = trim((string) $this->input->post('reason', TRUE));
+
+		if ( ! in_array($wallet, Agent_wallet_lib::WALLETS, TRUE))
+		{
+			$this->session->set_flashdata('error', 'Pick a wallet.');
+			redirect('admin/agents/wallets/'.$id);
+		}
+
+		if ( ! in_array($direction, array('credit', 'debit'), TRUE))
+		{
+			$this->session->set_flashdata('error', 'Pick credit or debit.');
+			redirect('admin/agents/wallets/'.$id);
+		}
+
+		if ($amount <= 0)
+		{
+			$this->session->set_flashdata('error', 'Enter an amount greater than zero.');
+			redirect('admin/agents/wallets/'.$id);
+		}
+
+		if ($reason === '')
+		{
+			$this->session->set_flashdata('error', 'A reason is required for a manual adjustment.');
+			redirect('admin/agents/wallets/'.$id);
+		}
+
+		$ok = ($direction === 'credit')
+			? $this->agent_wallet_lib->credit($agent->id, $wallet, $amount, 'admin_credit', 'agents', $agent->id, $reason)
+			: $this->agent_wallet_lib->debit($agent->id, $wallet, $amount, 'admin_debit', 'agents', $agent->id, $reason);
+
+		if ($ok === FALSE)
+		{
+			$this->session->set_flashdata('error', $direction === 'debit'
+				? 'That would overdraw the '.$wallet.' wallet. Nothing was changed.'
+				: 'Could not apply the adjustment.');
+			redirect('admin/agents/wallets/'.$id);
+		}
+
+		$this->log_action(ucfirst($direction).'ed agent '.$wallet.' wallet', 'agents', $agent->id,
+			money($amount).' - '.$reason);
+
+		$this->session->set_flashdata('success', ucfirst($direction).'ed '.money($amount).' on the '.$wallet.' wallet.');
+		redirect('admin/agents/wallets/'.$id);
+	}
+
 	public function index()
 	{
 		$this->require_perm('agents.view');
@@ -101,6 +222,8 @@ class Agents extends Admin_Controller {
 			$this->form_validation->set_rules('status', 'Status', 'required|in_list[active,blocked]');
 			$this->form_validation->set_rules('commission_deposit_percent', 'Deposit Commission', 'trim|numeric|less_than_equal_to[100]');
 			$this->form_validation->set_rules('commission_profit_percent', 'Profit Commission', 'trim|numeric|less_than_equal_to[100]');
+			$this->form_validation->set_rules('commission_settle_percent', 'Per-Deposit Commission', 'trim|numeric|less_than_equal_to[100]');
+			$this->form_validation->set_rules('commission_withdraw_percent', 'Withdrawal Commission', 'trim|numeric|less_than_equal_to[100]');
 
 			if ($mode === 'create')
 			{
@@ -172,6 +295,12 @@ class Agents extends Admin_Controller {
 					'user_id'    => $linked_id,
 					'commission_deposit_percent' => $this->numeric_or_null($this->input->post('commission_deposit_percent', TRUE)),
 					'commission_profit_percent'  => $this->numeric_or_null($this->input->post('commission_profit_percent', TRUE)),
+					'commission_settle_percent'   => $this->numeric_or_null($this->input->post('commission_settle_percent', TRUE)),
+					'commission_withdraw_percent' => $this->numeric_or_null($this->input->post('commission_withdraw_percent', TRUE)),
+					// An agent who is not accepting work is skipped by the
+					// user-facing picker but keeps every balance they hold.
+					'accepting_deposits'    => $this->input->post('accepting_deposits') ? 1 : 0,
+					'accepting_withdrawals' => $this->input->post('accepting_withdrawals') ? 1 : 0,
 				);
 
 				if ($password = $this->input->post('password'))
@@ -368,7 +497,10 @@ class Agents extends Admin_Controller {
 			'id' => NULL, 'user_id' => NULL, 'name' => '', 'username' => '', 'email' => '',
 			'country' => '', 'nid_number' => '', 'nid_front' => NULL, 'nid_back' => NULL,
 			'commission_deposit_percent' => NULL, 'commission_profit_percent' => NULL,
+			'commission_settle_percent' => NULL, 'commission_withdraw_percent' => NULL,
 			'total_commission' => 0, 'status' => 'active',
+			'deposit_balance' => 0, 'withdraw_balance' => 0, 'commission_balance' => 0,
+			'accepting_deposits' => 1, 'accepting_withdrawals' => 1,
 			'last_login_at' => NULL, 'created_at' => NULL,
 		);
 	}

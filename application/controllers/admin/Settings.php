@@ -4,7 +4,32 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Settings extends Admin_Controller {
 
 	/** Keys that must never be blanked or set to nonsense. */
-	protected $numeric_keys = array('withdrawal_fee_percent');
+	protected $numeric_keys = array(
+		'withdrawal_fee_percent',
+		'agent_deposit_commission_percent',
+		'agent_withdraw_commission_percent',
+		'agent_payout_fee_percent',
+	);
+
+	/**
+	 * Free-text keys that are really enums.
+	 *
+	 * These two decide where every deposit and withdrawal is routed, so a
+	 * typo here would take the whole flow down. The list is both the form's
+	 * option source and the save whitelist, so the two cannot drift.
+	 */
+	protected $enum_keys = array(
+		'deposit_route' => array(
+			'admin' => 'Admin only - users pay the platform wallet (current behaviour)',
+			'agent' => 'Agent only - every deposit is routed through an agent',
+			'both'  => 'Both - the user picks admin wallet or agent',
+		),
+		'withdraw_route' => array(
+			'admin' => 'Admin only - the platform pays every withdrawal (current behaviour)',
+			'agent' => 'Agent only - every withdrawal is paid by an agent',
+			'both'  => 'Both - the user picks admin or agent',
+		),
+	);
 
 	public function index($group = 'general')
 	{
@@ -28,6 +53,7 @@ class Settings extends Admin_Controller {
 			'groups'      => $groups,
 			'group'       => $group,
 			'rows'        => $this->setting_model->by_group($group),
+			'enum_keys'   => $this->enum_keys,
 		));
 	}
 
@@ -66,6 +92,16 @@ class Settings extends Admin_Controller {
 					$this->session->set_flashdata('error', $row->label.' must be a number between 0 and 100.');
 					redirect('admin/settings/index/'.$group);
 				}
+			}
+
+			// A route key outside its whitelist would leave the deposit and
+			// withdrawal screens with no path at all, so it is rejected rather
+			// than stored and discovered later.
+			if (isset($this->enum_keys[$row->key]) && ! isset($this->enum_keys[$row->key][$value]))
+			{
+				$this->session->set_flashdata('error', $row->label.' must be one of: '
+					.implode(', ', array_keys($this->enum_keys[$row->key])).'.');
+				redirect('admin/settings/index/'.$group);
 			}
 
 			$this->setting_model->set($row->key, is_string($value) ? trim($value) : $value);

@@ -267,8 +267,46 @@ if ( ! function_exists('tx_label'))
 			'admin_credit'   => 'Admin Credit',
 			'admin_debit'    => 'Admin Debit',
 			'agent_commission' => 'Agent Commission',
+			'team_bonus'     => 'Team Bonus',
 		);
 		return isset($map[$type]) ? $map[$type] : ucfirst(str_replace('_', ' ', $type));
+	}
+}
+
+if ( ! function_exists('agent_tx_label'))
+{
+	/** tx_label()'s counterpart for the agent ledger's own movement types. */
+	function agent_tx_label($type)
+	{
+		$map = array(
+			'float_purchase'   => 'Float Purchase',
+			'deposit_settle'   => 'Deposit Settled',
+			'deposit_refund'   => 'Deposit Reversed',
+			'withdraw_settle'  => 'Withdrawal Paid',
+			'withdraw_reverse' => 'Withdrawal Reversed',
+			'commission'       => 'Commission',
+			'payout'           => 'Cash-Out Request',
+			'payout_refund'    => 'Cash-Out Returned',
+			'transfer_in'      => 'Transfer In',
+			'transfer_out'     => 'Transfer Out',
+			'admin_credit'     => 'Admin Credit',
+			'admin_debit'      => 'Admin Debit',
+		);
+		return isset($map[$type]) ? $map[$type] : ucfirst(str_replace('_', ' ', $type));
+	}
+}
+
+if ( ! function_exists('agent_wallet_label'))
+{
+	/** Human name for one of the three agent wallets. */
+	function agent_wallet_label($wallet)
+	{
+		$map = array(
+			'deposit'    => 'Deposit Float',
+			'withdraw'   => 'Withdraw Collection',
+			'commission' => 'Commission',
+		);
+		return isset($map[$wallet]) ? $map[$wallet] : ucfirst((string) $wallet);
 	}
 }
 

@@ -37,6 +37,8 @@ class Admin_model extends MY_Model {
 			'deposits'    => (int) $this->db->where('status', 'pending')->count_all_results('deposits'),
 			'withdrawals' => (int) $this->db->where('status', 'pending')->count_all_results('withdrawals'),
 			'agent_applications' => (int) $this->db->where('status', 'pending')->count_all_results('agent_applications'),
+			'agent_float'        => (int) $this->db->where('status', 'pending')->count_all_results('agent_float_orders'),
+			'agent_payouts'      => (int) $this->db->where('status', 'pending')->count_all_results('agent_payouts'),
 		);
 	}
 }

@@ -14,7 +14,7 @@
       <table class="table">
         <thead>
           <tr><th>#</th><th class="text-end">Requested</th><th class="text-end">Fee</th><th class="text-end">Net</th>
-              <th>Binance ID</th><th>Status</th><th>Payout Ref</th><th>Date</th></tr>
+              <th>Binance ID</th><th>Paid by</th><th>Status</th><th>Payout Ref</th><th>Date</th></tr>
         </thead>
         <tbody>
         <?php foreach ($rows as $w): ?>
@@ -24,6 +24,18 @@
             <td class="text-end num text-bad"><?php echo money($w->fee); ?></td>
             <td class="text-end num fw-semibold"><?php echo money($w->net_amount); ?></td>
             <td class="mono"><?php echo html_escape($w->wallet_address); ?></td>
+            <td class="small">
+              <?php if ( ! empty($w->agent_username)): ?>
+                <span class="chip chip-info">Agent <?php echo html_escape($w->agent_username); ?></span>
+                <?php if ($w->agent_status === 'pending'): ?>
+                  <div class="text-muted" style="font-size:.75rem">awaiting payment</div>
+                <?php elseif (in_array($w->agent_status, array('rejected', 'expired'), TRUE)): ?>
+                  <div class="text-muted" style="font-size:.75rem">passed to support</div>
+                <?php endif; ?>
+              <?php else: ?>
+                <span class="text-muted">Platform</span>
+              <?php endif; ?>
+            </td>
             <td><?php echo chip($w->status); ?></td>
             <td class="mono" title="<?php echo html_escape($w->txid); ?>"><?php echo $w->txid ? html_escape(short_txt($w->txid)) : '-'; ?></td>
             <td class="small text-muted text-nowrap"><?php echo fmt_date($w->created_at, 'd M, H:i'); ?></td>
@@ -31,7 +43,7 @@
           <?php if ($w->admin_note): ?>
             <tr>
               <td></td>
-              <td colspan="7" class="small text-muted"><i data-lucide="message-square"></i> <?php echo html_escape($w->admin_note); ?></td>
+              <td colspan="8" class="small text-muted"><i data-lucide="message-square"></i> <?php echo html_escape($w->admin_note); ?></td>
             </tr>
           <?php endif; ?>
         <?php endforeach; ?>

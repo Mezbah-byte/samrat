@@ -380,8 +380,16 @@ class Agent_Controller extends MY_Controller {
 			exit;
 		}
 
-		$this->view_data['agent']       = $this->agent;
-		$this->view_data['agent_stats'] = $this->agent_model->sidebar_badges($this->team_ids());
+		$this->view_data['agent']        = $this->agent;
+		$this->view_data['agent_stats']  = $this->agent_model->sidebar_badges($this->team_ids(), $this->agent->id);
+		// The float system is a separate feature switch from the panel itself:
+		// an agent can keep reviewing team deposits with it off.
+		$this->view_data['float_on']     = $this->setting_model->get('agent_float_enabled', '0') === '1';
+		$this->view_data['agent_wallets_balances'] = array(
+			'deposit'    => (float) $this->agent->deposit_balance,
+			'withdraw'   => (float) $this->agent->withdraw_balance,
+			'commission' => (float) $this->agent->commission_balance,
+		);
 	}
 
 	/**
@@ -418,6 +426,23 @@ class Agent_Controller extends MY_Controller {
 		{
 			$this->session->set_flashdata('error', 'That account is not in your team.');
 			redirect('agent/team');
+		}
+	}
+
+	/**
+	 * Gate on every float-system screen.
+	 *
+	 * Switching `agent_float_enabled` off has to close the wallets, float,
+	 * payout and request screens without touching the review screens the
+	 * panel had before - so the check lives here rather than in the
+	 * constructor, which would lock an agent out of the whole panel.
+	 */
+	protected function require_float()
+	{
+		if ($this->setting_model->get('agent_float_enabled', '0') !== '1')
+		{
+			$this->session->set_flashdata('error', 'The agent float system is currently disabled.');
+			redirect('agent/dashboard');
 		}
 	}
 

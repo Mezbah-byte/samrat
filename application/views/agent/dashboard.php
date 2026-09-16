@@ -7,6 +7,115 @@
   </div>
 <?php endif; ?>
 
+<?php if ( ! empty($float['on'])): ?>
+  <?php if (empty($float['wallet_count'])): ?>
+    <div class="alert alert-warning">
+      <i class="bi bi-exclamation-triangle"></i>
+      You have no active receive wallet, so users cannot pick you for a deposit.
+      <a href="<?php echo base_url('agent/wallets/create'); ?>" class="alert-link">Add one now</a>.
+    </div>
+  <?php endif; ?>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+      <div class="card stat-card">
+        <div class="card-body">
+          <div class="stat-label">Deposit Float</div>
+          <div class="stat-value"><?php echo money($float['balances']['deposit']); ?></div>
+          <i class="bi bi-wallet2 stat-icon"></i>
+          <a href="<?php echo base_url('agent/float/create'); ?>" class="small">Buy more</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card stat-card">
+        <div class="card-body">
+          <div class="stat-label">Withdraw Collection</div>
+          <div class="stat-value"><?php echo money($float['balances']['withdraw']); ?></div>
+          <i class="bi bi-cash-stack stat-icon"></i>
+          <a href="<?php echo base_url('agent/payouts'); ?>" class="small">Cash out</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card stat-card">
+        <div class="card-body">
+          <div class="stat-label">Commission Wallet</div>
+          <div class="stat-value"><?php echo money($float['balances']['commission']); ?></div>
+          <i class="bi bi-coin stat-icon"></i>
+          <a href="<?php echo base_url('agent/payouts'); ?>" class="small">Cash out or move to float</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card stat-card">
+        <div class="card-body">
+          <div class="stat-label">Settled / Collected</div>
+          <div class="stat-value fs-5"><?php echo money($float['settled']); ?></div>
+          <div class="small text-muted">paid out <?php echo money($float['collected']); ?></div>
+          <i class="bi bi-arrow-left-right stat-icon"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-xl-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-hourglass-split"></i> Requests Waiting on You</span>
+        </div>
+        <div class="card-body small">
+          <div class="d-flex justify-content-between py-1">
+            <span class="text-muted">Deposits to accept</span>
+            <span class="fw-semibold <?php echo ! empty($agent_stats['req_deposits']) ? 'text-warning' : ''; ?>"><?php echo (int) $agent_stats['req_deposits']; ?></span>
+          </div>
+          <div class="d-flex justify-content-between py-1">
+            <span class="text-muted">Withdrawals to pay</span>
+            <span class="fw-semibold <?php echo ! empty($agent_stats['req_withdrawals']) ? 'text-warning' : ''; ?>"><?php echo (int) $agent_stats['req_withdrawals']; ?></span>
+          </div>
+          <hr class="my-2">
+          <p class="text-muted mb-0">
+            Unanswered requests escalate to an admin after
+            <?php echo (int) setting('agent_accept_timeout_hours', 6); ?> hours.
+          </p>
+          <div class="mt-3 d-flex gap-2">
+            <a href="<?php echo base_url('agent/requests/deposits'); ?>" class="btn btn-sm btn-outline-primary">Deposits</a>
+            <a href="<?php echo base_url('agent/requests/withdrawals'); ?>" class="btn btn-sm btn-outline-primary">Withdrawals</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-list-columns-reverse"></i> Recent Wallet Movements</span>
+          <a href="<?php echo base_url('agent/ledger'); ?>" class="btn btn-sm btn-outline-secondary">All</a>
+        </div>
+        <div class="table-wrap">
+          <table class="table table-hover mb-0">
+            <thead><tr><th>When</th><th>Type</th><th class="text-end">Amount</th></tr></thead>
+            <tbody>
+            <?php if (empty($float['recent'])): ?>
+              <tr><td colspan="3" class="text-center text-muted py-4">No movements yet.</td></tr>
+            <?php else: foreach ($float['recent'] as $t): ?>
+              <tr>
+                <td class="small text-muted text-nowrap"><?php echo fmt_date($t->created_at, 'd M, H:i'); ?></td>
+                <td class="small"><?php echo agent_tx_label($t->type); ?> <span class="text-muted">&middot; <?php echo agent_wallet_label($t->wallet); ?></span></td>
+                <td class="text-end fw-semibold <?php echo (float) $t->amount < 0 ? 'text-danger' : 'text-success'; ?>">
+                  <?php echo ((float) $t->amount < 0 ? '-' : '+').money(abs((float) $t->amount)); ?>
+                </td>
+              </tr>
+            <?php endforeach; endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+<?php endif; ?>
+
 <div class="row g-3 mb-3">
   <div class="col-6 col-xl-3">
     <div class="card stat-card">

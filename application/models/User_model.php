@@ -244,15 +244,56 @@ class User_model extends MY_Model {
 		);
 	}
 
+	/** SQL that is 1 when the users-table row holds at least one running investment. */
+	private function active_package_sql()
+	{
+		return '(EXISTS (SELECT 1 FROM `'.$this->db->dbprefix('investments').'` i'
+			.' WHERE i.user_id = `'.$this->db->dbprefix($this->table).'`.id'
+			." AND i.status = 'active'))";
+	}
+
+	/**
+	 * Admin user list. Rows carry `has_active_package`, and the screen shows
+	 * plan status for active accounts - so the 'active' / 'inactive' filters
+	 * mean an active account with / without a running package.
+	 */
 	public function paginate_users($limit, $offset, $status = '', $search = '')
 	{
-		$where = array();
-		if ($status !== '')
-		{
-			$where['status'] = $status;
-		}
-		return $this->paginate($limit, $offset, $where, $search,
-			array('full_name', 'username', 'email', 'mobile', 'referral_code'));
+		$has_package = $this->active_package_sql();
+
+		$build = function () use ($status, $search, $has_package) {
+			if ($status === 'active' || $status === 'inactive')
+			{
+				$this->db->where('status', 'active')
+					->where($has_package.' = '.($status === 'active' ? 1 : 0), NULL, FALSE);
+			}
+			elseif ($status !== '')
+			{
+				$this->db->where('status', $status);
+			}
+			if ($search !== '')
+			{
+				$this->db->group_start()
+					->like('full_name', $search)
+					->or_like('username', $search)
+					->or_like('email', $search)
+					->or_like('mobile', $search)
+					->or_like('referral_code', $search)
+				->group_end();
+			}
+		};
+
+		$build();
+		$total = (int) $this->db->count_all_results($this->table);
+
+		$build();
+		$rows = $this->db->select('*')
+			->select($has_package.' AS has_active_package', FALSE)
+			->order_by($this->order_by, $this->order_dir)
+			->limit((int) $limit, (int) $offset)
+			->get($this->table)->result();
+
+		return array('rows' => $rows, 'total' => $total);
 	}
 
 	public function platform_stats()
@@ -266,7 +307,9 @@ class User_model extends MY_Model {
 
 		return array(
 			'total_users'     => (int) $row->total_users,
-			'active_users'    => (int) $this->db->where('status', 'active')->count_all_results($this->table),
+			'active_users'    => (int) $this->db->where('status', 'active')
+				->where($this->active_package_sql().' = 1', NULL, FALSE)
+				->count_all_results($this->table),
 			'blocked_users'   => (int) $this->db->where('status', 'blocked')->count_all_results($this->table),
 			'total_balance'   => (float) ($row->total_balance ?: 0),
 			'total_deposit'   => (float) ($row->total_deposit ?: 0),
