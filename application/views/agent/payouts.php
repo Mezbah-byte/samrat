@@ -1,113 +1,143 @@
-<div class="row g-3 mb-3">
-  <?php foreach (array('deposit', 'withdraw', 'commission') as $w): ?>
-    <div class="col-md-4">
-      <div class="card stat-card">
-        <div class="card-body">
-          <div class="stat-label"><?php echo agent_wallet_label($w); ?></div>
-          <div class="stat-value"><?php echo money($balances[$w]); ?></div>
-          <i class="bi bi-<?php echo $w === 'deposit' ? 'wallet2' : ($w === 'withdraw' ? 'cash-stack' : 'coin'); ?> stat-icon"></i>
-        </div>
-      </div>
-    </div>
-  <?php endforeach; ?>
+<?php
+$cashable = $balances['withdraw'] + $balances['commission'];
+
+$tiles = array(
+	array('label' => 'Deposit Float',       'value' => $balances['deposit'],    'icon' => 'coins',
+	      'grad' => 'grad-primary', 'note' => 'Not cashable - spend it', 'link' => 'agent/float'),
+	array('label' => 'Withdraw Collection', 'value' => $balances['withdraw'],   'icon' => 'piggy-bank',
+	      'grad' => 'grad-teal',    'note' => 'From withdrawals you paid'),
+	array('label' => 'Commission',          'value' => $balances['commission'], 'icon' => 'sparkles',
+	      'grad' => 'grad-success', 'note' => 'Cash out or top up float'),
+);
+?>
+
+<div class="page-head reveal" data-reveal-order="0">
+  <div>
+    <h1>Cash Out</h1>
+    <p class="lede">
+      <strong class="text-accent"><?php echo money($cashable); ?></strong> available to withdraw from the platform.
+    </p>
+  </div>
+  <a href="<?php echo base_url('agent/ledger'); ?>" class="btn btn-ghost"><i data-lucide="receipt-text"></i> Ledger</a>
 </div>
 
+<?php $this->load->view('agent/_tiles', array('tiles' => $tiles, 'tiles_offset' => 1, 'tiles_cols' => 'col-md-4')); ?>
+
 <div class="row g-3">
-  <div class="col-lg-5">
-    <div class="card mb-3">
-      <div class="card-header"><i class="bi bi-send"></i> Request a Cash-Out</div>
-      <div class="card-body">
-        <div class="alert alert-info small">
-          <i class="bi bi-info-circle"></i>
-          The amount leaves your wallet the moment you submit, so it cannot be spent twice
-          while an admin reviews it. A rejected request returns it in full.
+  <div class="col-xl-5">
+    <div class="panel mb-3 reveal" data-reveal-order="4">
+      <div class="panel-head"><i data-lucide="banknote"></i> Request a Cash-Out</div>
+      <div class="panel-body">
+        <div class="d-flex gap-2 align-items-start mb-3">
+          <span class="icon-tile sm grad-info"><i data-lucide="info"></i></span>
+          <p class="small text-muted mb-0">
+            The amount leaves your wallet the moment you submit, so it cannot be spent twice while
+            an admin reviews it. A rejected request returns it in full.
+          </p>
         </div>
+
         <?php echo form_open('agent/payouts/create'); ?>
-          <div class="mb-2">
-            <label class="form-label small">From wallet</label>
-            <select name="source" class="form-select form-select-sm" required>
-              <option value="withdraw">Withdraw Collection (<?php echo money($balances['withdraw']); ?>)</option>
-              <option value="commission">Commission (<?php echo money($balances['commission']); ?>)</option>
+          <div class="mb-3">
+            <label class="form-label">From wallet <span class="text-bad">*</span></label>
+            <select name="source" class="form-select" required>
+              <option value="withdraw">Withdraw Collection &mdash; <?php echo money($balances['withdraw']); ?></option>
+              <option value="commission">Commission &mdash; <?php echo money($balances['commission']); ?></option>
             </select>
-            <div class="form-text">Deposit float cannot be cashed out &mdash; spend it or ask an admin.</div>
+            <div class="form-text">Deposit float cannot be cashed out. Spend it, or ask an admin.</div>
           </div>
-          <div class="mb-2">
-            <label class="form-label small">Amount</label>
-            <input type="number" step="0.01" min="0" name="amount" class="form-control form-control-sm" required>
+
+          <div class="mb-3">
+            <label class="form-label">Amount <span class="text-bad">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><?php echo html_escape(currency()); ?></span>
+              <input type="number" step="0.01" min="0" name="amount" class="form-control" required>
+            </div>
             <?php if ($fee_percent > 0): ?>
               <div class="form-text"><?php echo percent($fee_percent); ?> fee is deducted from what is sent.</div>
             <?php endif; ?>
           </div>
-          <div class="mb-2">
-            <label class="form-label small">Network</label>
-            <select name="network" class="form-select form-select-sm" required>
+
+          <div class="mb-3">
+            <label class="form-label">Network <span class="text-bad">*</span></label>
+            <select name="network" class="form-select" required>
               <?php foreach (network_list() as $code => $label): ?>
                 <option value="<?php echo $code; ?>"><?php echo html_escape($label); ?></option>
               <?php endforeach; ?>
             </select>
           </div>
-          <div class="mb-3">
-            <label class="form-label small">Your wallet address</label>
-            <input type="text" name="wallet_address" class="form-control form-control-sm mono" maxlength="191" required>
+
+          <div class="mb-4">
+            <label class="form-label">Your wallet address <span class="text-bad">*</span></label>
+            <input type="text" name="wallet_address" class="form-control mono" maxlength="191" required>
+            <div class="form-text text-bad">Double-check it &mdash; a wrong address cannot be recovered.</div>
           </div>
-          <button class="btn btn-primary w-100 btn-sm" data-confirm="Submit this cash-out request? The amount is held straight away."><i class="bi bi-send"></i> Request Cash-Out</button>
+
+          <button class="btn btn-grad w-100" data-confirm="Submit this cash-out request? The amount is held straight away.">
+            <i data-lucide="send"></i> Request Cash-Out
+          </button>
         <?php echo form_close(); ?>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header"><i class="bi bi-arrow-left-right"></i> Commission &rarr; Float</div>
-      <div class="card-body">
+    <div class="panel reveal" data-reveal-order="5">
+      <div class="panel-head"><i data-lucide="arrow-left-right"></i> Commission &rarr; Float</div>
+      <div class="panel-body">
         <p class="small text-muted">
-          Move commission into your deposit float so you can settle more user deposits with it.
-          This is the only transfer between your own wallets.
+          Move commission into your deposit float to settle more user deposits with it. This is the
+          only transfer allowed between your own wallets.
         </p>
         <?php echo form_open('agent/payouts/transfer', array('class' => 'd-flex gap-2')); ?>
-          <input type="number" step="0.01" min="0" name="amount" class="form-control form-control-sm" placeholder="Amount" required>
-          <button class="btn btn-outline-primary btn-sm text-nowrap" data-confirm="Move this from commission into your deposit float?">Move</button>
+          <div class="input-group">
+            <span class="input-group-text"><?php echo html_escape(currency()); ?></span>
+            <input type="number" step="0.01" min="0" name="amount" class="form-control" placeholder="Amount" required>
+          </div>
+          <button class="btn btn-quiet text-nowrap" data-confirm="Move this from commission into your deposit float?">
+            <i data-lucide="arrow-right"></i> Move
+          </button>
         <?php echo form_close(); ?>
       </div>
     </div>
   </div>
 
-  <div class="col-lg-7">
-    <div class="card">
-      <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <span><i class="bi bi-list-columns-reverse"></i> Cash-Out History</span>
+  <div class="col-xl-7">
+    <div class="panel h-100 reveal" data-reveal-order="6">
+      <div class="panel-head">
+        <i data-lucide="history"></i> Cash-Out History
+        <span class="spacer"></span>
         <?php echo form_open('agent/payouts', array('method' => 'get', 'class' => 'd-flex gap-2 m-0')); ?>
-          <select name="status" class="form-select form-select-sm" data-autosubmit>
+          <select name="status" class="form-select form-select-sm" data-autosubmit style="width:auto">
             <option value="">All statuses</option>
             <?php foreach (array('pending', 'approved', 'paid', 'rejected') as $s): ?>
               <option value="<?php echo $s; ?>" <?php echo $status === $s ? 'selected' : ''; ?>><?php echo ucfirst($s); ?></option>
             <?php endforeach; ?>
           </select>
-          <button class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i></button>
+          <button class="btn btn-quiet btn-icon" aria-label="Filter"><i data-lucide="filter"></i></button>
         <?php echo form_close(); ?>
       </div>
 
       <?php if (empty($rows)): ?>
-        <div class="empty-state"><i class="bi bi-send"></i>No cash-outs yet.</div>
+        <div class="empty-state"><i data-lucide="banknote"></i>No cash-outs yet.</div>
       <?php else: ?>
         <div class="table-wrap">
-          <table class="table table-hover mb-0">
+          <table class="table">
             <thead><tr><th>#</th><th>From</th><th class="text-end">Requested</th><th class="text-end">To receive</th><th>Status</th><th>When</th><th></th></tr></thead>
             <tbody>
             <?php foreach ($rows as $p): ?>
               <tr>
-                <td class="text-muted">#<?php echo (int) $p->id; ?></td>
-                <td class="small"><?php echo agent_wallet_label($p->source); ?></td>
-                <td class="text-end small"><?php echo money($p->amount); ?></td>
-                <td class="text-end fw-semibold"><?php echo money($p->net_amount); ?></td>
-                <td><?php echo badge($p->status); ?></td>
-                <td class="small text-muted text-nowrap"><?php echo fmt_date($p->created_at, 'd M, H:i'); ?></td>
-                <td class="text-end"><a href="<?php echo base_url('agent/payouts/view/'.$p->id); ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                <td class="text-dim">#<?php echo (int) $p->id; ?></td>
+                <td class="text-muted"><?php echo agent_wallet_label($p->source); ?></td>
+                <td class="text-end num"><?php echo money($p->amount); ?></td>
+                <td class="text-end num fw-semibold"><?php echo money($p->net_amount); ?></td>
+                <td><?php echo chip($p->status); ?></td>
+                <td class="text-muted text-nowrap small"><?php echo fmt_date($p->created_at, 'd M, H:i'); ?></td>
+                <td class="text-end"><a href="<?php echo base_url('agent/payouts/view/'.$p->id); ?>" class="btn btn-ghost btn-icon"><i data-lucide="eye"></i></a></td>
               </tr>
             <?php endforeach; ?>
             </tbody>
           </table>
         </div>
-        <div class="card-footer d-flex justify-content-between align-items-center">
-          <small class="text-muted"><?php echo (int) $total; ?> requests</small>
+        <div class="panel-foot">
+          <span><?php echo (int) $total; ?> request<?php echo $total == 1 ? '' : 's'; ?></span>
           <?php echo pager(base_url('agent/payouts').'?status='.urlencode($status), $total, $per_page, $page); ?>
         </div>
       <?php endif; ?>

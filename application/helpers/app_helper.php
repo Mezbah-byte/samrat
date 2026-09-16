@@ -296,6 +296,35 @@ if ( ! function_exists('agent_tx_label'))
 	}
 }
 
+if ( ! function_exists('agent_request_chip'))
+{
+	/**
+	 * Pill for a deposit/withdrawal's `agent_status`.
+	 *
+	 * The wording differs by side - a deposit is "settled", a withdrawal is
+	 * "paid" - so the kind is passed rather than guessed from the value.
+	 *
+	 * @param string $status one of none|pending|accepted|rejected|expired
+	 * @param string $kind   'deposit' or 'withdrawal'
+	 */
+	function agent_request_chip($status, $kind = 'deposit')
+	{
+		$done = ($kind === 'withdrawal') ? 'Paid' : 'Settled';
+
+		$map = array(
+			'pending'  => array('warn', 'Waiting'),
+			'accepted' => array('ok',   $done),
+			'rejected' => array('bad',  'Declined'),
+			'expired'  => array('mute', 'Expired'),
+			'none'     => array('mute', 'Direct'),
+		);
+
+		list($tone, $label) = isset($map[$status]) ? $map[$status] : array('mute', ucfirst((string) $status));
+
+		return '<span class="chip chip-'.$tone.'">'.$label.'</span>';
+	}
+}
+
 if ( ! function_exists('agent_wallet_label'))
 {
 	/** Human name for one of the three agent wallets. */

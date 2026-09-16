@@ -63,9 +63,15 @@ class Agent_commission_model extends MY_Model {
 	/** Split by where the money came from, for the earnings screen. */
 	public function totals_by_source($agent_id)
 	{
+		// Every source is seeded so the screens can index them unconditionally.
+		// The first two are the team-based accrual; the last two are the float
+		// system, and they land in the agent's commission wallet instead of a
+		// linked user's balance.
 		$out = array(
-			'deposit'      => array('deals' => 0, 'earned' => 0.0),
-			'daily_profit' => array('deals' => 0, 'earned' => 0.0),
+			'deposit'        => array('deals' => 0, 'earned' => 0.0),
+			'daily_profit'   => array('deals' => 0, 'earned' => 0.0),
+			'agent_deposit'  => array('deals' => 0, 'earned' => 0.0),
+			'agent_withdraw' => array('deals' => 0, 'earned' => 0.0),
 		);
 
 		$rows = $this->db->select('source, COUNT(*) AS deals, SUM(amount) AS earned', FALSE)

@@ -1,73 +1,73 @@
-<div class="row g-3 mb-3">
-  <div class="col-6 col-xl-4">
-    <div class="card stat-card"><div class="card-body">
-      <div class="stat-label">Pending</div>
-      <div class="stat-value"><?php echo (int) $stats['pending_count']; ?></div>
-      <i class="bi bi-hourglass-split stat-icon"></i>
-    </div></div>
-  </div>
-  <div class="col-6 col-xl-4">
-    <div class="card stat-card"><div class="card-body">
-      <div class="stat-label">Awaiting Your Review</div>
-      <div class="stat-value"><?php echo (int) $stats['awaiting_review']; ?></div>
-      <i class="bi bi-clipboard-check stat-icon"></i>
-    </div></div>
-  </div>
-  <div class="col-12 col-xl-4">
-    <div class="card stat-card"><div class="card-body">
-      <div class="stat-label">Approved Team Deposits</div>
-      <div class="stat-value"><?php echo money($stats['approved_total']); ?></div>
-      <i class="bi bi-graph-up-arrow stat-icon"></i>
-    </div></div>
+<?php
+$tiles = array(
+	array('label' => 'Pending', 'value' => $stats['pending_count'], 'icon' => 'hourglass',
+	      'grad' => 'grad-primary', 'money' => FALSE, 'note' => 'Awaiting an admin decision'),
+	array('label' => 'Awaiting Your Review', 'value' => $stats['awaiting_review'], 'icon' => 'clipboard-check',
+	      'grad' => $stats['awaiting_review'] ? 'grad-warning' : 'grad-info', 'money' => FALSE,
+	      'note' => 'You have not weighed in', 'tone' => $stats['awaiting_review'] ? 'text-warn' : ''),
+	array('label' => 'Approved Team Deposits', 'value' => $stats['approved_total'], 'icon' => 'trending-up',
+	      'grad' => 'grad-success', 'note' => 'Lifetime volume below you'),
+);
+?>
+
+<div class="page-head reveal" data-reveal-order="0">
+  <div>
+    <h1>Team Deposits</h1>
+    <p class="lede">Everything your downline has submitted. You advise &mdash; an admin decides.</p>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-    <span><i class="bi bi-inbox-fill"></i> Team Deposits</span>
-    <form class="d-flex gap-2" method="get" action="<?php echo base_url('agent/deposits'); ?>">
-      <select name="status" class="form-select form-select-sm">
-        <option value="">All status</option>
-        <option value="pending"  <?php echo $status === 'pending'  ? 'selected' : ''; ?>>Pending</option>
-        <option value="approved" <?php echo $status === 'approved' ? 'selected' : ''; ?>>Approved</option>
-        <option value="rejected" <?php echo $status === 'rejected' ? 'selected' : ''; ?>>Rejected</option>
+<?php $this->load->view('agent/_tiles', array('tiles' => $tiles, 'tiles_offset' => 1, 'tiles_cols' => 'col-md-4')); ?>
+
+<div class="panel reveal" data-reveal-order="4">
+  <div class="panel-head">
+    <i data-lucide="inbox"></i> Deposits
+    <span class="spacer"></span>
+    <?php echo form_open('agent/deposits', array('method' => 'get', 'class' => 'd-flex gap-2 m-0')); ?>
+      <select name="status" class="form-select form-select-sm" data-autosubmit style="width:auto">
+        <option value="">All statuses</option>
+        <?php foreach (array('pending', 'approved', 'rejected') as $s): ?>
+          <option value="<?php echo $s; ?>" <?php echo $status === $s ? 'selected' : ''; ?>><?php echo ucfirst($s); ?></option>
+        <?php endforeach; ?>
       </select>
-      <input type="text" name="q" class="form-control form-control-sm" placeholder="User or TXID" value="<?php echo html_escape($search); ?>">
-      <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i></button>
-    </form>
+      <input type="search" name="q" class="form-control form-control-sm" placeholder="User or TXID"
+             value="<?php echo html_escape($search); ?>" style="min-width:170px">
+      <button class="btn btn-quiet btn-icon" aria-label="Search"><i data-lucide="search"></i></button>
+    <?php echo form_close(); ?>
   </div>
 
-  <div class="table-wrap">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr><th>#</th><th>User</th><th>Package</th><th>Amount</th><th>Status</th><th>My Recommendation</th><th>Date</th><th></th></tr>
-      </thead>
-      <tbody>
-      <?php if (empty($rows)): ?>
-        <tr><td colspan="8" class="text-center text-muted py-4">No deposits match this filter.</td></tr>
-      <?php else: foreach ($rows as $d): ?>
-        <tr>
-          <td class="text-muted">#<?php echo (int) $d->id; ?></td>
-          <td class="small"><?php echo html_escape($d->username); ?></td>
-          <td class="small"><?php echo html_escape($d->package_name); ?></td>
-          <td class="small text-nowrap"><?php echo money($d->amount); ?></td>
-          <td><?php echo badge($d->status); ?></td>
-          <td class="small">
-            <?php if ($d->agent_recommendation): ?>
-              <?php echo badge($d->agent_recommendation === 'approve' ? 'approved' : 'rejected'); ?>
-            <?php else: ?>
-              <span class="text-muted">Not reviewed</span>
-            <?php endif; ?>
-          </td>
-          <td class="small text-muted text-nowrap"><?php echo fmt_date($d->created_at, 'd M Y'); ?></td>
-          <td class="text-end"><a href="<?php echo base_url('agent/deposits/view/'.$d->id); ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
-        </tr>
-      <?php endforeach; endif; ?>
-      </tbody>
-    </table>
-  </div>
-
-  <?php if ($total > $per_page): ?>
-    <div class="card-footer"><?php echo pager(base_url('agent/deposits'), $total, $per_page, $page); ?></div>
+  <?php if (empty($rows)): ?>
+    <div class="empty-state"><i data-lucide="inbox"></i>No deposits match this filter.</div>
+  <?php else: ?>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>#</th><th>User</th><th>Package</th><th class="text-end">Amount</th><th>Status</th><th>My call</th><th>Date</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach ($rows as $d): ?>
+          <tr>
+            <td class="text-dim">#<?php echo (int) $d->id; ?></td>
+            <td class="fw-semibold"><?php echo html_escape($d->username); ?></td>
+            <td class="text-muted"><?php echo html_escape($d->package_name); ?></td>
+            <td class="text-end num"><?php echo money($d->amount); ?></td>
+            <td><?php echo chip($d->status); ?></td>
+            <td><?php echo $d->agent_recommendation
+                  ? chip($d->agent_recommendation === 'approve' ? 'approved' : 'rejected')
+                  : '<span class="text-dim small">Not reviewed</span>'; ?></td>
+            <td class="text-muted text-nowrap small"><?php echo fmt_date($d->created_at, 'd M Y'); ?></td>
+            <td class="text-end">
+              <a href="<?php echo base_url('agent/deposits/view/'.$d->id); ?>"
+                 class="btn btn-sm <?php echo ($d->status === 'pending' && ! $d->agent_recommendation) ? 'btn-grad' : 'btn-quiet'; ?>">
+                <?php echo ($d->status === 'pending' && ! $d->agent_recommendation) ? 'Review' : 'View'; ?>
+              </a>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel-foot">
+      <span><?php echo (int) $total; ?> deposit<?php echo $total == 1 ? '' : 's'; ?></span>
+      <?php echo pager(base_url('agent/deposits').'?status='.urlencode($status).'&q='.urlencode($search), $total, $per_page, $page); ?>
+    </div>
   <?php endif; ?>
 </div>
